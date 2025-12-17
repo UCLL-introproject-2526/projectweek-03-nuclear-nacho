@@ -26,17 +26,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-#extra
-*.jpg
-*.jpeg
-*.png
-*.wav
-*.mp3
-*.ogg
-*.midi
-*.zip
-*.7z
-*.rar
+
 
 # PyInstaller
 #   Usually these files are written by a python script from a template
