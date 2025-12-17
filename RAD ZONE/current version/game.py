@@ -11,6 +11,7 @@ from sound_manager import SoundManager
 
 
 
+from inventory import Inventory
 
 def load_building(path, size, x, y):
     surf = ImageLoader.load(path, size=size)[0]
@@ -23,6 +24,7 @@ class Game:
 
         self.sound = SoundManager()
 
+        pygame.key.set_repeat(0)
         self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self._clock = pygame.time.Clock()
 
@@ -68,12 +70,96 @@ class Game:
         self._ui = UI(health, stamina, outline)
         self._minimap = Minimap(map_surf, buildings, (w, h))
 
+        def load_icon(path):
+            return ImageLoader.load(path, size=(48, 48))[0]
+
+        def load_weapon(path):
+            return ImageLoader.load(path, size=(96, 96))[0]
+
+        item_data = {
+            "pistol": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/pistool.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/pistool.png")
+            },
+            "shotgun": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png")
+            },
+            "machine_gun": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png")
+            },
+            "revolver": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/revolver.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/revolver.png")
+            },
+            "crossbow": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/crossbow.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/crossbow.png")
+            },
+            "knife": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/knife.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png")
+            }
+        }
+
+
+        iodine_icon = load_icon("RAD ZONE/current version/Graphics/Iodine pills.png")
+        iodine_icon = pygame.transform.scale(
+            iodine_icon,
+            (
+                int(iodine_icon.get_width() * 2),
+                int(iodine_icon.get_height() * 2)
+            )
+        )
+
+        item_data["iodine"] = {
+            "icon": iodine_icon,
+            "weapon_surf": None,
+            "stackable": True,
+            "amount": 5,
+            "max_stack": 20
+        }
+        
+        item_data.update({
+            "bandage": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/bandage.png"),
+                "weapon_surf": None,
+                "stackable": True,
+                "amount": 3,
+                "max_stack": 10
+            },
+            "energy_drink": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/Energy drink.png"),
+                "weapon_surf": None,
+                "stackable": True,
+                "amount": 2,
+                "max_stack": 5
+            }
+        })
+
+        socket_surf = ImageLoader.load(
+            "RAD ZONE/current version/Graphics/Inventory_box.png",
+            size=(64, 64)
+        )[0]
+        
+        self._inventory_key_down = False
+        self._inventory = Inventory(socket_surf, item_data, (w, h))
+
     def run(self):
         while True:
             dt = self._clock.tick(60) / 1000  # Delta time in seconds
             current_time = pygame.time.get_ticks() / 1000  # Current time in seconds
 
             # ---- EVENT HANDLING ----
+
+            dt = self._clock.tick(60) / 1000
+
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()
+            mouse_down = mouse_pressed[0]
+            mouse_up = not mouse_pressed[0]
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -87,6 +173,19 @@ class Game:
                         self._player.previous_weapon()
 
             # ---- INPUT STATES ----
+            # if event.type == pygame.KEYDOWN:
+            #         if event.key == pygame.K_e:
+            #             self._inventory.toggle()
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_e and not self._inventory_key_down:
+                        self._inventory.toggle()
+                        self._inventory_key_down = True
+
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_e:
+                        self._inventory_key_down = False
+
             keys = pygame.key.get_pressed()
 
             # ---- UPDATE GAME OBJECTS ----
@@ -94,6 +193,7 @@ class Game:
             self._camera.update(keys, self._player.get_speed(), dt)
 
             # ---- DRAW ----
+
             self._screen.fill((0, 0, 0))
             self._world.draw(self._screen, self._camera)
             self._player.draw(self._screen)
@@ -103,4 +203,15 @@ class Game:
             self._minimap.draw(self._screen, player_world_pos)
 
             # ---- REFRESH DISPLAY ----
+            self._inventory.draw(self._screen)
+
+            self._inventory.handle_hotbar_keys(keys)
+            self._inventory.update(mouse_pos, mouse_down, mouse_up)
+
             pygame.display.flip()
+
+    def load_icon(path):
+        return ImageLoader.load(path, size=(48, 48))[0]
+
+    def load_weapon(path):
+        return ImageLoader.load(path, size=(96, 96))[0]
