@@ -8,6 +8,10 @@ from ui import UI
 from minimap import Minimap
 from assets import ImageLoader
 
+def load_building(path, size, x, y):
+    surf = ImageLoader.load(path, size=size)[0]
+    return surf, pygame.Vector2(x, y)
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -27,11 +31,25 @@ class Game:
         outline = ImageLoader.load("RAD ZONE/current version/Graphics/Border-bar.png", size=(512, 35))
 
         buildings = [
-            (ImageLoader.load(f"RAD ZONE/current version/Graphics/Building{i}.png", size=(350, 350))[0],
-             pygame.Vector2(1600 - (i - 1) * 350, 800))
-            for i in range(1, 6)
+            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 1722, 1068),
         ]
 
+            # load_building("RAD ZONE/current version/Graphics/Building2.png", (350, 350), 1950, 800),
+            # load_building("RAD ZONE/current version/Graphics/Building3.png", (350, 350), 1250, 800),
+            # load_building("RAD ZONE/current version/Graphics/Building4.png", (350, 350), 900, 800),
+            # load_building("RAD ZONE/current version/Graphics/Building5.png", (350, 350), 550, 800),
+
+        # buildings = [
+        #     (ImageLoader.load(f"RAD ZONE/current version/Graphics/Building{i}.png", size=(350, 350))[0],
+        #      pygame.Vector2(1600 - (i - 1) * 350, 800))
+        #     for i in range(1, 6)
+        # ]
+
+            # (load_image("Graphics/Building2.png", size=(700, 700))[0], pygame.Vector2(1950, 800)),
+            # (load_image("Graphics/Building3.png", size=(700, 700))[0], pygame.Vector2(1250, 800)),
+            # (load_image("Graphics/Building4.png", size=(700, 700))[0], pygame.Vector2(900, 800)),
+            # (load_image("Graphics/Building5.png", size=(700, 700))[0], pygame.Vector2(550, 800)),
+            
         # Create objects
         self._player = Player(char_surf, char_rect)
         self._camera = Camera(
