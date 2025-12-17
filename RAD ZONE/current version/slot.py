@@ -44,3 +44,16 @@ class Slot:
             icon = self._item.get_icon()
             icon_rect = icon.get_rect(center=self._rect.center)
             screen.blit(icon, icon_rect)
+
+            # draw stack count
+            if self._item.is_stackable() and self._item.get_amount() > 1:
+                font = pygame.font.SysFont(None, 24)
+                text = font.render(
+                    str(self._item.get_amount()),
+                    True,
+                    (255, 255, 255)
+                )
+                text_rect = text.get_rect(
+                    bottomright=self._rect.bottomright
+                )
+                screen.blit(text, text_rect)

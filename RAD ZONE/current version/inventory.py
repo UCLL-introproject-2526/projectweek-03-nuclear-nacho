@@ -65,13 +65,20 @@ class Inventory:
         # --- Spawn ALL weapons into inventory ---
         slot_index = 0
 
-        for weapon_id, data in item_data.items():
+        for item_id, data in item_data.items():
             if slot_index >= len(self._slots):
-                break  # safety check (inventory full)
+                break
 
-            self._slots[slot_index].set_item(
-                Item(weapon_id, data["icon"], data["weapon_surf"])
+            item = Item(
+                item_id,
+                data["icon"],
+                data.get("weapon_surf"),
+                data.get("stackable", False),
+                data.get("amount", 1),
+                data.get("max_stack", 1)
             )
+
+            self._slots[slot_index].set_item(item)
             slot_index += 1
 
 
@@ -124,17 +131,25 @@ class Inventory:
                     target = slot
                     break
 
-            if target is None:
-                # released nowhere → return to origin
-                self._drag_origin.set_item(self._dragged_item)
+            target_item = target.get_item()
+
+            if target_item is None:
+                target.set_item(self._dragged_item)
+
+            elif target_item.can_stack_with(self._dragged_item):
+                added = target_item.add_to_stack(
+                    self._dragged_item.get_amount()
+                )
+                if added < self._dragged_item.get_amount():
+                    self._dragged_item.remove_from_stack(added)
+                    self._drag_origin.set_item(self._dragged_item)
+
             else:
-                # drop (swap if occupied)
-                if target.get_item() is None:
-                    target.set_item(self._dragged_item)
-                else:
-                    temp = target.get_item()
-                    target.set_item(self._dragged_item)
-                    self._drag_origin.set_item(temp)
+                # swap
+                temp = target_item
+                target.set_item(self._dragged_item)
+                self._drag_origin.set_item(temp)
+
 
             self._dragged_item = None
             self._drag_origin = None
@@ -154,5 +169,8 @@ class Inventory:
 
         if self._dragged_item:
             surf = self._dragged_item.get_weapon_surface()
+            if surf is None:
+                surf = self._dragged_item.get_icon()
+
             rect = surf.get_rect(center=pygame.mouse.get_pos())
             screen.blit(surf, rect)

@@ -95,6 +95,41 @@ class Game:
             }
         }
 
+
+        iodine_icon = load_icon("RAD ZONE/current version/Graphics/Iodine pills.png")
+        iodine_icon = pygame.transform.scale(
+            iodine_icon,
+            (
+                int(iodine_icon.get_width() * 2),
+                int(iodine_icon.get_height() * 2)
+            )
+        )
+
+        item_data["iodine"] = {
+            "icon": iodine_icon,
+            "weapon_surf": None,
+            "stackable": True,
+            "amount": 5,
+            "max_stack": 20
+        }
+        
+        item_data.update({
+            "bandage": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/bandage.png"),
+                "weapon_surf": None,
+                "stackable": True,
+                "amount": 3,
+                "max_stack": 10
+            },
+            "energy_drink": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/Energy drink.png"),
+                "weapon_surf": None,
+                "stackable": True,
+                "amount": 2,
+                "max_stack": 5
+            }
+        })
+
         socket_surf = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Inventory_box.png",
             size=(64, 64)
