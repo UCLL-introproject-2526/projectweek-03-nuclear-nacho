@@ -8,10 +8,13 @@ from ui import UI
 from minimap import Minimap
 from assets import ImageLoader
 from inventory import Inventory
+from hoofdscherm import Menu
+
 
 def load_building(path, size, x, y):
     surf = ImageLoader.load(path, size=size)[0]
     return surf, pygame.Vector2(x, y)
+
 
 class Game:
     def __init__(self):
@@ -23,35 +26,40 @@ class Game:
         w, h = self._screen.get_size()
 
         # Load assets
-        map_surf, _ = ImageLoader.load("RAD ZONE/current version/Graphics/Game_building_test.png", size=(7680, 6400))
+        map_surf, _ = ImageLoader.load(
+            "RAD ZONE/current version/Graphics/Game_building_test.png",
+            size=(7680, 6400)
+        )
         char_surf, char_rect = ImageLoader.load(
-            "RAD ZONE/current version/Graphics/AChar.png", size=(150, 150), center=(w // 2, h // 2)
+            "RAD ZONE/current version/Graphics/AChar.png",
+            size=(150, 150),
+            center=(w // 2, h // 2)
         )
 
-        health = ImageLoader.load("RAD ZONE/current version/Graphics/Health-bar.png", size=(512, 35), center=(260, 30))
-        stamina = ImageLoader.load("RAD ZONE/current version/Graphics/Stamina-bar.png", size=(512, 35), center=(260, 70))
-        outline = ImageLoader.load("RAD ZONE/current version/Graphics/Border-bar.png", size=(512, 35))
+        health = ImageLoader.load(
+            "RAD ZONE/current version/Graphics/Health-bar.png",
+            size=(512, 35),
+            center=(260, 30)
+        )
+        stamina = ImageLoader.load(
+            "RAD ZONE/current version/Graphics/Stamina-bar.png",
+            size=(512, 35),
+            center=(260, 70)
+        )
+        outline = ImageLoader.load(
+            "RAD ZONE/current version/Graphics/Border-bar.png",
+            size=(512, 35)
+        )
 
         buildings = [
-            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 1722, 1068),
+            load_building(
+                "RAD ZONE/current version/Graphics/Building7.png",
+                (400, 768),
+                1722,
+                1068
+            ),
         ]
 
-            # load_building("RAD ZONE/current version/Graphics/Building2.png", (350, 350), 1950, 800),
-            # load_building("RAD ZONE/current version/Graphics/Building3.png", (350, 350), 1250, 800),
-            # load_building("RAD ZONE/current version/Graphics/Building4.png", (350, 350), 900, 800),
-            # load_building("RAD ZONE/current version/Graphics/Building5.png", (350, 350), 550, 800),
-
-        # buildings = [
-        #     (ImageLoader.load(f"RAD ZONE/current version/Graphics/Building{i}.png", size=(350, 350))[0],
-        #      pygame.Vector2(1600 - (i - 1) * 350, 800))
-        #     for i in range(1, 6)
-        # ]
-
-            # (load_image("Graphics/Building2.png", size=(700, 700))[0], pygame.Vector2(1950, 800)),
-            # (load_image("Graphics/Building3.png", size=(700, 700))[0], pygame.Vector2(1250, 800)),
-            # (load_image("Graphics/Building4.png", size=(700, 700))[0], pygame.Vector2(900, 800)),
-            # (load_image("Graphics/Building5.png", size=(700, 700))[0], pygame.Vector2(550, 800)),
-            
         # Create objects
         self._player = Player(char_surf, char_rect)
         self._camera = Camera(
@@ -95,7 +103,6 @@ class Game:
             }
         }
 
-
         iodine_icon = load_icon("RAD ZONE/current version/Graphics/Iodine pills.png")
         iodine_icon = pygame.transform.scale(
             iodine_icon,
@@ -112,7 +119,7 @@ class Game:
             "amount": 5,
             "max_stack": 20
         }
-        
+
         item_data.update({
             "bandage": {
                 "icon": load_icon("RAD ZONE/current version/Graphics/bandage.png"),
@@ -134,13 +141,29 @@ class Game:
             "RAD ZONE/current version/Graphics/Inventory_box.png",
             size=(64, 64)
         )[0]
-        
+
         self._inventory_key_down = False
         self._inventory = Inventory(socket_surf, item_data, (w, h))
 
-    def run(self):
-        while True:
+        # --------- HOOFDMENU OBJECT ----------
+        self._menu = Menu(
+            self._screen,
+            ["Start Game", "Scoreboard", "Settings", "Credits", "Exit Game"]
+        )
 
+    def run(self):
+        # ---------- EERST HOOFDMENU ----------
+        choice = self._menu.run()
+
+        if choice == "Exit Game":
+            pygame.quit()
+            exit()
+
+        # Later kan je hier scoreboard / settings / credits afhandelen
+        # Voor nu: bij "Start Game" of iets anders → game starten
+
+        # ---------- GAME LOOP ----------
+        while True:
             dt = self._clock.tick(60) / 1000
 
             mouse_pos = pygame.mouse.get_pos()
@@ -152,10 +175,6 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-
-            # if event.type == pygame.KEYDOWN:
-            #         if event.key == pygame.K_e:
-            #             self._inventory.toggle()
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e and not self._inventory_key_down:
@@ -171,7 +190,6 @@ class Game:
             self._player.update(keys, dt)
             self._camera.update(keys, self._player.get_speed(), dt)
 
-
             self._screen.fill((0, 0, 0))
 
             self._world.draw(self._screen, self._camera)
@@ -186,15 +204,7 @@ class Game:
             self._minimap.draw(self._screen, player_world_pos)
 
             self._inventory.draw(self._screen)
-
             self._inventory.handle_hotbar_keys(keys)
             self._inventory.update(mouse_pos, mouse_down, mouse_up)
 
             pygame.display.flip()
-
-    def load_icon(path):
-        return ImageLoader.load(path, size=(48, 48))[0]
-
-    def load_weapon(path):
-        return ImageLoader.load(path, size=(96, 96))[0]
-
