@@ -7,6 +7,10 @@ from world import World
 from ui import UI
 from minimap import Minimap
 from assets import ImageLoader
+from sound_manager import SoundManager
+
+
+
 
 def load_building(path, size, x, y):
     surf = ImageLoader.load(path, size=size)[0]
@@ -15,6 +19,10 @@ def load_building(path, size, x, y):
 class Game:
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
+
+        self.sound = SoundManager()
+
         self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self._clock = pygame.time.Clock()
 
@@ -51,7 +59,7 @@ class Game:
             # (load_image("Graphics/Building5.png", size=(700, 700))[0], pygame.Vector2(550, 800)),
             
         # Create objects
-        self._player = Player(char_surf, char_rect)
+        self._player = Player(char_surf, char_rect, self.sound)
         self._camera = Camera(
             map_surf.get_width() // 2 - char_rect.centerx,
             map_surf.get_height() // 2 - char_rect.centery
@@ -62,29 +70,37 @@ class Game:
 
     def run(self):
         while True:
-            dt = self._clock.tick(60) / 1000
+            dt = self._clock.tick(60) / 1000  # Delta time in seconds
+            current_time = pygame.time.get_ticks() / 1000  # Current time in seconds
 
+            # ---- EVENT HANDLING ----
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
 
+                # Weapon cycling with mouse wheel
+                if event.type == pygame.MOUSEWHEEL:
+                    if event.y > 0:
+                        self._player.next_weapon()
+                    else:
+                        self._player.previous_weapon()
+
+            # ---- INPUT STATES ----
             keys = pygame.key.get_pressed()
 
-            self._player.update(keys, dt)
+            # ---- UPDATE GAME OBJECTS ----
+            self._player.update(keys, dt, current_time)
             self._camera.update(keys, self._player.get_speed(), dt)
 
+            # ---- DRAW ----
             self._screen.fill((0, 0, 0))
-
             self._world.draw(self._screen, self._camera)
             self._player.draw(self._screen)
-
             self._ui.draw(self._screen, self._player.get_stamina())
 
-            player_world_pos = (
-                self._camera.get_position() +
-                self._player.get_rect().center
-            )
+            player_world_pos = self._camera.get_position() + self._player.get_rect().center
             self._minimap.draw(self._screen, player_world_pos)
 
+            # ---- REFRESH DISPLAY ----
             pygame.display.flip()
