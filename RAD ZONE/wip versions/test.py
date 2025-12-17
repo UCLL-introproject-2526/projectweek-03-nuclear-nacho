@@ -20,7 +20,7 @@ def load_image(path, size=None, center=None):
 
 
 # -------------------- ASSETS --------------------
-Map_surf, _ = load_image("Graphics/4testmap.png", size=(7680, 6400))
+Map_surf, _ = load_image("Graphics/Game_building_test.png", size=(7680, 6400))
 
 Char_surf, Char_rect = load_image(
     "Graphics/AChar.png",
@@ -40,14 +40,14 @@ Outline_bar_surf, _ = load_image(
 
 # Buildings (surface, world position)
 buildings = [
-    (load_image("Graphics/Building1.png", size=(700, 700))[0], pygame.Vector2(1600, 800)),
-    (load_image("Graphics/Building2.png", size=(700, 700))[0], pygame.Vector2(1950, 800)),
-    (load_image("Graphics/Building3.png", size=(700, 700))[0], pygame.Vector2(1250, 800)),
-    (load_image("Graphics/Building4.png", size=(700, 700))[0], pygame.Vector2(900, 800)),
-    (load_image("Graphics/Building5.png", size=(700, 700))[0], pygame.Vector2(550, 800)),
+    (load_image("Graphics/Building7.png", size=(400, 768))[0], pygame.Vector2(1722, 1068))
 
 ]
 
+    # (load_image("Graphics/Building2.png", size=(700, 700))[0], pygame.Vector2(1950, 800)),
+    # (load_image("Graphics/Building3.png", size=(700, 700))[0], pygame.Vector2(1250, 800)),
+    # (load_image("Graphics/Building4.png", size=(700, 700))[0], pygame.Vector2(900, 800)),
+    # (load_image("Graphics/Building5.png", size=(700, 700))[0], pygame.Vector2(550, 800)),
 # -------------------- GAME STATE --------------------
 camera_pos = pygame.Vector2(
     Map_surf.get_width() // 2 - Char_rect.centerx,

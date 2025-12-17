@@ -17,17 +17,17 @@ class Game:
         w, h = self._screen.get_size()
 
         # Load assets
-        map_surf, _ = ImageLoader.load("Graphics/BasePlate.png", size=(7680, 6400))
+        map_surf, _ = ImageLoader.load("RAD ZONE/current version/Graphics/Game_building_test.png", size=(7680, 6400))
         char_surf, char_rect = ImageLoader.load(
-            "Graphics/AChar.png", size=(150, 150), center=(w // 2, h // 2)
+            "RAD ZONE/current version/Graphics/AChar.png", size=(150, 150), center=(w // 2, h // 2)
         )
 
-        health = ImageLoader.load("Graphics/Health-bar.png", size=(512, 35), center=(260, 30))
-        stamina = ImageLoader.load("Graphics/Stamina-bar.png", size=(512, 35), center=(260, 70))
-        outline = ImageLoader.load("Graphics/Border-bar.png", size=(512, 35))
+        health = ImageLoader.load("RAD ZONE/current version/Graphics/Health-bar.png", size=(512, 35), center=(260, 30))
+        stamina = ImageLoader.load("RAD ZONE/current version/Graphics/Stamina-bar.png", size=(512, 35), center=(260, 70))
+        outline = ImageLoader.load("RAD ZONE/current version/Graphics/Border-bar.png", size=(512, 35))
 
         buildings = [
-            (ImageLoader.load(f"Graphics/Building{i}.png", size=(350, 350))[0],
+            (ImageLoader.load(f"RAD ZONE/current version/Graphics/Building{i}.png", size=(350, 350))[0],
              pygame.Vector2(1600 - (i - 1) * 350, 800))
             for i in range(1, 6)
         ]
