@@ -18,6 +18,8 @@ from death_screen import DeathScreen
 
 def load_building(path, size, x, y):
     surf = ImageLoader.load(path, size=size)[0]
+    rect = surf.get_rect()
+    rect.midbottom = (x, y)
     return surf, pygame.Vector2(x, y)
 
 
@@ -54,7 +56,7 @@ class Game:
 
         # LOAD ASSETS
         self.map_surf, _ = ImageLoader.load(
-            "RAD ZONE/current version/Graphics/Game_building_test.png",
+            "RAD ZONE/current version/Graphics/Final map game.png",
             size=(7680, 6400)
         )
         self.char_surf, self.char_rect = ImageLoader.load(
@@ -77,7 +79,7 @@ class Game:
             size=(512, 35)
         )
         self.buildings = [
-            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 1722, 1068)
+            load_building("RAD ZONE/current version/Graphics/building 7 V2.png", (400, 768), 763.82, 515)
         ]
 
         # INVENTORY
@@ -263,5 +265,5 @@ class Game:
     # ---------------- ZOMBIE ATTACKS ----------------
     def _handle_zombie_attacks(self, player_pos, dt):
         for zombie in self._zombie_spawner.get_zombies():
-            if zombie.is_attacking() and (zombie.get_position() - player_pos).length() < 60:
+            if zombie.is_attacking() and (zombie.get_position() - player_pos).length() < 80:
                 self._player.take_damage(zombie._damage_per_second * dt)

@@ -104,7 +104,7 @@ class Zombie:
         self._attack_duration = 0.6
         self._is_attacking = False
         self._attack_end_time = 0
-        self._damage_per_second = 30  # Damage zombies deal to player
+        self._damage_per_second = 15  # Damage zombies deal to player
         
         # Death
         self._is_dead = False
@@ -181,7 +181,9 @@ class Zombie:
                 self.state = "attack"
                 self._is_attacking = True
                 self._last_attack_time = current_time
+                self._attack_end_time = current_time + self._attack_duration
                 self.animator.set_attack(current_time, self._attack_duration)
+
         elif not self._is_attacking and distance >= self._attack_range:
             # Move towards player
             self.state = "walk"
