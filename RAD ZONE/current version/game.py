@@ -14,6 +14,8 @@ from Zombie import ZombieSpawner
 from scoreboard import Scoreboard
 from pause_menu import PauseMenu
 from death_screen import DeathScreen
+from commit_score import CommitScoreScreen
+
 
 
 def load_building(path, size, x, y):
@@ -279,22 +281,34 @@ class Game:
                 self._player.take_damage(zombie._damage_per_second * dt)
 
     # ---------------- DEATH SCREEN ----------------
+        # ---------------- DEATH SCREEN ----------------
     def _death_loop(self):
         kills = self._zombie_spawner.get_kill_count()
-    
-        # Maak een screenshot van het huidige scherm om als achtergrond te gebruiken
+
+        # Maak een snapshot van het scherm
         game_surface = self._screen.copy()
-        
-        action = DeathScreen(self._screen, kills).run(game_surface)
-        
-        if action == "Play":
-            self.start_game()
-            self.state = "PLAYING"
-        elif action == "CommitScore":
-            print("Commit score clicked")  # Voeg je commit logic toe
-        elif action == "Quit":
-            self.state = "MENU"
-            self._reset_game()
+
+        while True:
+            from commit_score import CommitScoreScreen
+            action = DeathScreen(self._screen, kills).run(game_surface)
+
+            if action == "Play":
+                self._reset_game()
+                self.start_game()
+                self.state = "PLAYING"
+                return
+            elif action == "CommitScore":
+                # Open CommitScoreScreen
+                name = CommitScoreScreen(self._screen, kills).run()
+                print(f"Score opgeslagen voor: {name}")
+                self._reset_game()
+                self.state = "MENU"
+                return
+            elif action == "Quit":
+                self._reset_game()
+                self.state = "MENU"
+                return
+
 
     # ---------------- RESET GAME ----------------
     def _reset_game(self):

@@ -35,8 +35,8 @@ class DeathScreen:
             self.buttons[name] = ImageButton(center_x, start_y + spacing * i, idle, pressed)
 
         # Fonts
-        self.font_big = pygame.font.SysFont(None, 80)
-        self.font_small = pygame.font.SysFont(None, 40)
+        self.font_big =  pygame.font.Font("RAD ZONE/UI/Menu/edit-undo.brk.ttf", 80)
+        self.font_small = pygame.font.Font("RAD ZONE/UI/Menu/edit-undo.brk.ttf", 40)
 
     def draw(self, game_surface):
         # Achtergrond overlay
