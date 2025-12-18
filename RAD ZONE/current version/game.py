@@ -75,10 +75,8 @@ class Game:
 
         # Create objects
         self._player = Player(char_surf, char_rect, self.sound)
-        self._camera = Camera(
-            map_surf.get_width() // 2 - char_rect.centerx,
-            map_surf.get_height() // 2 - char_rect.centery
-        )
+        self._camera = Camera(w, h)
+
         self._world = World(map_surf, buildings)
         self._ui = UI(health, stamina, outline)
         self._minimap = Minimap(map_surf, buildings, (w, h))
@@ -229,7 +227,7 @@ class Game:
             keys = pygame.key.get_pressed()
 
             self._player.update(keys, dt, current_time)
-            self._camera.update(keys, self._player.get_speed(), dt)
+            self._camera.update(pygame.Vector2(self._player.get_rect().center))
 
             # ---- DRAW ----
 
@@ -238,8 +236,9 @@ class Game:
             self._player.draw(self._screen)
             self._ui.draw(self._screen, self._player.get_stamina())
 
-            player_world_pos = self._camera.get_position() + self._player.get_rect().center
+            player_world_pos = pygame.Vector2(self._player.get_rect().center)
             self._minimap.draw(self._screen, player_world_pos)
+
 
             self._inventory.draw(self._screen)
             self._inventory.handle_hotbar_keys(keys)
