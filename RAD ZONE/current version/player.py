@@ -35,8 +35,8 @@ class Player:
         self._recover_at = 20
         self._exhausted = False
 
-        self._base_speed = 200
-        self._sprint_speed = 300
+        self._base_speed = 400
+        self._sprint_speed = 600
         self._speed = self._base_speed
 
     # -------- GETTERS --------
