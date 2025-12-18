@@ -40,10 +40,10 @@ class SoundManager:
         }
 
 # TERUG IN COMMENTEN WANNEER AUDIOFILES VAN ZOMBIES_DEATH BESCHIKBAAR ZIJN.
-        # self.zombie_death = [
-        #     pygame.mixer.Sound(f"RAD ZONE\Sound-FX\MP3/zombie_death_{i:02}.mp3")
-        #     for i in range(1,21)
-        # ]
+        self.zombie_death = [
+        pygame.mixer.Sound(f"RAD ZONE/Sound-FX/MP3/zomdie_die_{i}.mp3")
+        for i in range(1, 17)
+        ]
 
         self._current_equip_sound = None
 
