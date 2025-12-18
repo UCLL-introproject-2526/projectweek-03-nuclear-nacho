@@ -26,59 +26,65 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
+
         self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self._clock = pygame.time.Clock()
         pygame.key.set_repeat(0)
 
-        w, h = self._screen.get_size()
-
-        # Sound manager
+        # GELUID & HOOFDMENU
         self.sound = SoundManager()
-
-        # HOOFDMENU
         self._menu = Menu(self._screen, ["Play", "Scoreboard", "Settings", "Credits", "Quit"])
 
+        # ---------------GAME STATE---------------
+        self.state = "MENU" 
+
+        # OBJECTEN ---------- starten als NONE.
+        self._player = None
+        self._world = None
+        self._camera = None
+        self._ui = None
+        self._inventory = None
+        self._zombie_spawner = None
+        self._minimap = None
+
+        # Load assets ONLY
+        w, h = self._screen.get_size()
+
+
+
         # LOAD ASSETS
-        map_surf, _ = ImageLoader.load(
+        self.map_surf, _ = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Game_building_test.png",
             size=(7680, 6400)
         )
-        char_surf, char_rect = ImageLoader.load(
+        self.char_surf, self.char_rect = ImageLoader.load(
             "RAD ZONE/current version/Graphics/AChar.png",
             size=(150, 150),
             center=(w // 2, h // 2)
         )
 
-        health = ImageLoader.load(
+        self.health = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Health-bar.png",
             size=(512, 35),
             center=(260, 30)
         )
-        stamina = ImageLoader.load(
+        self.stamina = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Stamina-bar.png",
             size=(512, 35),
             center=(260, 70)
         )
-        outline = ImageLoader.load(
+        self.outline = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Border-bar.png",
             size=(512, 35)
         )
 
-        buildings = [
+        self.buildings = [
             load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 1722, 1068)
         ]
 
-        # OBJECTEN
-        self._player = Player(char_surf, char_rect, self.sound)
-        self._camera = Camera(w, h)
-        self._world = World(map_surf, buildings)
-        self._ui = UI(health, stamina, outline)
-        self._minimap = Minimap(map_surf, buildings, (w, h))
-        self._zombie_spawner = ZombieSpawner()
-
         # INVENTORY
+        self._inventory = None
         self._inventory_key_down = False
-        self._inventory = self._create_inventory((w, h))
 
         # KNIFE LOGIC
         self._last_f_press_time = -1
@@ -137,16 +143,36 @@ class Game:
         hotbar_bg = ImageLoader.load("RAD ZONE/current version/Graphics/Hotbar_background.png")[0]
 
         return Inventory(socket_surf, item_data, screen_size, inventory_bg, hotbar_bg, self._player)
+    
+    #__START GAME__
+
+    def start_game(self):
+        w, h = self._screen.get_size()
+
+        self._player = Player(self.char_surf, self.char_rect, self.sound)
+        self._camera = Camera(w, h)
+        self._world = World(self.map_surf, self.buildings)
+        self._ui = UI(self.health, self.stamina, self.outline)
+        self._minimap = Minimap(self.map_surf, self.buildings, (w, h))
+        self._zombie_spawner = ZombieSpawner()
+
+        self._inventory_key_down = False
+        self._inventory = self._create_inventory((w, h))
 
     # ---------------- GAME LOOP ----------------
     def run(self):
         choice = self._menu.run()
+
+
         if choice == "Quit":
             pygame.quit()
             exit()
         if choice == "Scoreboard":
             Scoreboard(self._screen).run()
             return self.run()
+        if choice == "Play":
+            self.start_game()
+            self.state = "PLAYING"
 
         while True:
             dt = self._clock.tick(60) / 1000
@@ -157,94 +183,90 @@ class Game:
             mouse_down = mouse_pressed[0]
             mouse_up = not mouse_pressed[0]
 
-            for event in pygame.event.get():
+            # Event handling (always)
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-
-                # Weapon cycling with mouse wheel
-                if event.type == pygame.MOUSEWHEEL:
+                if self._inventory and event.type == pygame.MOUSEWHEEL:
                     if event.y > 0:
                         self._inventory.select_next()
                     else:
                         self._inventory.select_previous()
-
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_e and not self._inventory_key_down:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+                    if self._inventory and not self._inventory_key_down:
                         self._inventory.toggle()
                         self._inventory_key_down = True
-
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_e:
-                        self._inventory_key_down = False
+                if event.type == pygame.KEYUP and event.key == pygame.K_e:
+                    self._inventory_key_down = False
 
             keys = pygame.key.get_pressed()
-            self._handle_events()
 
-            # UPDATE OBJECTS
-            self._player.update(keys, dt, current_time)
-            player_pos = pygame.Vector2(self._player.get_rect().center)
-            self._camera.update(player_pos)
-            self._zombie_spawner.update(player_pos, dt, current_time)
+            # Gameplay logic only if PLAYING
+            if self.state == "PLAYING":
+                # Update objects
+                if self._player:
+                    self._player.update(keys, dt, current_time)
+                    player_pos = pygame.Vector2(self._player.get_rect().center)
+                if self._camera and self._player:
+                    self._camera.update(player_pos)
+                if self._zombie_spawner and self._player:
+                    self._zombie_spawner.update(player_pos, dt, current_time)
 
-            # Knife logic
-            self._handle_knife(keys, current_time, player_pos)
+                # Knife and zombie attacks
+                self._handle_knife(keys, current_time, player_pos)
+                self._handle_zombie_attacks(player_pos, dt)
 
-            # Zombie attacks
-            self._handle_zombie_attacks(player_pos, dt)
+                # Drawing
+                self._screen.fill((0, 0, 0))
+                if self._world:
+                    self._world.draw(self._screen, self._camera)
+                self._player.set_equipped_item(self._inventory.get_equipped_item())
 
-            # DRAW
-            self._screen.fill((0, 0, 0))
-            self._world.draw(self._screen, self._camera)
-            self._player.set_equipped_item(self._inventory.get_equipped_item())
+                drawables = [("player", self._player, player_pos.y)]
+                if self._zombie_spawner:
+                    for zombie in self._zombie_spawner.get_zombies():
+                        drawables.append(("zombie", zombie, zombie.get_position().y))
+                for obj_type, obj, _ in sorted(drawables, key=lambda x: x[2]):
+                    if obj_type == "player":
+                        obj.draw(self._screen)
+                    else:
+                        obj.draw(self._screen, self._camera)
 
-            
-            # Draw player and zombies with proper z-ordering (by y position)
-            # Collect all drawable objects
-            drawables = []
-            drawables.append(("player", self._player, player_pos.y))
-            for zombie in self._zombie_spawner.get_zombies():
-                drawables.append(("zombie", zombie, zombie.get_position().y))
-            for obj_type, obj, _ in sorted(drawables, key=lambda x: x[2]):
-                if obj_type == "player":
-                    obj.draw(self._screen)
-                else:
-                    obj.draw(self._screen, self._camera)
-            
-            self._ui.draw(
-                self._screen,
-                self._player.get_health(),
-                self._player.get_max_health(),
-                self._player.get_stamina(),
-                100
-            )
-
-
-            player_world_pos = pygame.Vector2(self._player.get_rect().center)
-            self._minimap.draw(self._screen, player_world_pos)
-
-
-            self._inventory.draw(self._screen)
-            self._inventory.update(mouse_pos, mouse_down, mouse_up)
+                # UI, minimap, inventory
+                if self._ui:
+                    self._ui.draw(self._screen,
+                                self._player.get_health(),
+                                self._player.get_max_health(),
+                                self._player.get_stamina(),
+                                100)
+                if self._minimap:
+                    self._minimap.draw(self._screen, player_pos)
+                if self._inventory:
+                    self._inventory.draw(self._screen)
+                    self._inventory.update(mouse_pos, mouse_down, mouse_up)
 
             pygame.display.flip()
 
+
     # ---------------- EVENT HANDLING ----------------
-    def _handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            if event.type == pygame.MOUSEWHEEL:
-                if event.y > 0:
-                    self._player.next_weapon()
-                else:
-                    self._player.previous_weapon()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_e and not self._inventory_key_down:
-                self._inventory.toggle()
-                self._inventory_key_down = True
-            if event.type == pygame.KEYUP and event.key == pygame.K_e:
-                self._inventory_key_down = False
+    #UIT GE COMMENT VOOR TEST
+    # def _handle_events(self):
+    #     for event in pygame.event.get():
+    #         if event.type == pygame.QUIT:
+    #             pygame.quit()
+    #             exit()
+    #         if event.type == pygame.MOUSEWHEEL:
+    #             if event.y > 0:
+    #                 self._player.next_weapon()
+    #             else:
+    #                 self._player.previous_weapon()
+    #         if event.type == pygame.KEYDOWN and event.key == pygame.K_e and not self._inventory_key_down:
+    #             self._inventory.toggle()
+    #             self._inventory_key_down = True
+    #         if event.type == pygame.KEYUP and event.key == pygame.K_e:
+    #             self._inventory_key_down = False
 
     # ---------------- KNIFE LOGIC ----------------
     def _handle_knife(self, keys, current_time, player_pos):
