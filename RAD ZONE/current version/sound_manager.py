@@ -29,6 +29,13 @@ class SoundManager:
                 "equip": pygame.mixer.Sound("RAD ZONE/Sound-FX/MP3/knife_slash.mp3"),  # can be same as shoot
                 "reload": None  # optional, just to match the interface
             },
+            "crossbow": {
+                "shoot": pygame.mixer.Sound("RAD ZONE/Sound-FX/MP3/shoot_crossbow.mp3"),
+                "equip": None,
+                "reload": None,
+            }
+
+
         }
 
 

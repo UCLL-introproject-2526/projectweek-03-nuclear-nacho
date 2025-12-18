@@ -205,10 +205,15 @@ class Game:
                 # Handle zombie attacks
                 self._handle_zombie_attacks(player_pos, dt)
 
-            # DRAW
-            self._screen.fill((0, 0, 0))
-            if self._world:
-                self._world.draw(self._screen, self._camera)
+                # Drawing
+                self._screen.fill((0, 0, 0))
+                if self._world:
+                    self._world.draw(self._screen, self._camera)
+                equipped_item = self._inventory.get_equipped_item()
+                if equipped_item is not None:
+                    self._player.set_equipped_item(equipped_item)
+
+
 
             # Draw zombies and player sorted by y-position
             drawables = []
@@ -236,6 +241,12 @@ class Game:
             if self._inventory:
                 self._inventory.draw(self._screen)
                 self._inventory.update(mouse_pos, mouse_down, mouse_up)
+
+            # equipped_item = self._inventory.get_equipped_item()
+            # if equipped_item:
+            #     self._player.set_equipped_item(equipped_item.get_id())  # get_id() returns item_id
+
+
 
             # Death check
             if self._player.get_health() <= 0:
