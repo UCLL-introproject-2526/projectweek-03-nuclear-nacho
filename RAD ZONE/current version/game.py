@@ -86,10 +86,6 @@ class Game:
         self._inventory = None
         self._inventory_key_down = False
 
-        # KNIFE LOGIC
-        self._last_f_press_time = -1
-        self._last_stabbed_zombies = set()
-        self._f_key_was_pressed = False
 
     # ---------------- HELPERS ----------------
     def _create_inventory(self, screen_size):
@@ -215,14 +211,17 @@ class Game:
                     self._zombie_spawner.update(player_pos, dt, current_time)
 
                 # Knife and zombie attacks
-                self._handle_knife(keys, current_time, player_pos)
+                self._handle_attack(current_time, player_pos)
                 self._handle_zombie_attacks(player_pos, dt)
 
                 # Drawing
                 self._screen.fill((0, 0, 0))
                 if self._world:
                     self._world.draw(self._screen, self._camera)
-                self._player.set_equipped_item(self._inventory.get_equipped_item())
+                equipped_item = self._inventory.get_equipped_item()
+                if equipped_item:
+                    self._player.set_equipped_item(equipped_item.key)  # pass the item key as weapon name
+
 
                 drawables = [("player", self._player, player_pos.y)]
                 if self._zombie_spawner:
@@ -269,21 +268,22 @@ class Game:
     #             self._inventory_key_down = False
 
     # ---------------- KNIFE LOGIC ----------------
-    def _handle_knife(self, keys, current_time, player_pos):
-        f_pressed = keys[pygame.K_f]
-        if f_pressed and not self._f_key_was_pressed and self._player.weapon.name == "knife":
-            self._last_f_press_time = current_time
-            self._last_stabbed_zombies = set()
-            self._f_key_was_pressed = True
-        elif not f_pressed:
-            self._f_key_was_pressed = False
+    def _handle_attack(self, current_time, player_pos):
+        player = self._player
+        weapon = player.weapon
 
-        if current_time - self._last_f_press_time < 0.5 and self._player.weapon.name == "knife":
-            for zombie in self._zombie_spawner.get_zombies():
-                if zombie not in self._last_stabbed_zombies and not zombie.is_dead():
-                    if (zombie.get_position() - player_pos).length() < 100:
-                        zombie.take_damage(50, zombie.get_position() - player_pos, current_time)
-                        self._last_stabbed_zombies.add(zombie)
+        if weapon.name == "knife":
+            # only attack if cooldown passed
+            if current_time - player._attack_last_time < 0.5:
+                for zombie in self._zombie_spawner.get_zombies():
+                    if zombie not in player._attack_targets_hit and not zombie.is_dead():
+                        if (zombie.get_position() - player_pos).length() < 100:
+                            zombie.take_damage(50, zombie.get_position() - player_pos, current_time)
+                            player._attack_targets_hit.add(zombie)
+        else:
+            # guns handled in Player.update()
+            pass
+
 
     # ---------------- ZOMBIE ATTACKS ----------------
     def _handle_zombie_attacks(self, player_pos, dt):

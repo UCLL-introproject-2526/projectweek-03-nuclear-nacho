@@ -49,9 +49,11 @@ class Player:
         self._exhausted = False
         self._last_run_time = 0
 
-        # ---------- KNIFE STATE ----------
-        self.last_f_press_time = -1
-        self.last_stabbed_zombies = set()
+        # ---------- ATTACK STATE ----------
+        self._attack_last_time = 0
+        self._attack_targets_hit = set()  # For melee hits
+        self._attack_key_was_pressed = False
+
 
     # ------------------- GETTERS -------------------
     def get_rect(self): return self._rect
@@ -66,7 +68,13 @@ class Player:
     
     def set_equipped_item(self, item):
         self._equipped_item = item
-
+        if item and hasattr(item, "name"):  # this might fail because inventory items don't have "name"
+            weapon_name = getattr(item, "name", None)
+            if not weapon_name and hasattr(item, "weapon_surf"):  # fallback: use item key as weapon name
+                weapon_name = item.key  # assuming your item object has 'key' (like "pistol")
+            if weapon_name:
+                self.weapon = Weapon(weapon_name, self.sound)
+                self.weapon.equip()
     
     def get_health(self):
         return self._health
@@ -145,13 +153,21 @@ class Player:
         if keys[pygame.K_r]:
             self.weapon.reload()
 
-        # ---------- KNIFE ANIMATION ----------
-        f_pressed = keys[pygame.K_f]
-        if f_pressed and not self._f_was_pressed:
-            self.animator.play_stab(current_time, duration=0.4)
-            self.last_f_press_time = current_time
-            self.last_stabbed_zombies = set()
-        self._f_was_pressed = f_pressed
+        # ---------- ATTACK ANIMATION----------
+        mouse_pressed = pygame.mouse.get_pressed()[0]
+        if mouse_pressed:
+            if self.weapon.name == "knife":
+                # knife slash animation & damage
+                if pygame.time.get_ticks() / 1000 - self._attack_last_time > 0.5:
+                    self.animator.play_stab(current_time, duration=0.4)
+                    self._attack_last_time = current_time
+                    self._attack_targets_hit = set()
+            else:
+                # guns
+                if self.weapon.full_auto or not self._was_mouse_pressed:
+                    self.weapon.shoot(current_time)
+        self._was_mouse_pressed = mouse_pressed
+
 
     # ------------------- DRAW -------------------
     def draw(self, screen):
