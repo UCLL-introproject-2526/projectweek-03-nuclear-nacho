@@ -8,9 +8,6 @@ from ui import UI
 from minimap import Minimap
 from assets import ImageLoader
 from sound_manager import SoundManager
-
-
-
 from inventory import Inventory
 from hoofdscherm import Menu
 
@@ -32,6 +29,12 @@ class Game:
         self._clock = pygame.time.Clock()
 
         w, h = self._screen.get_size()
+
+        # --------- HOOFDMENU OBJECT ----------
+        self._menu = Menu(
+            self._screen,
+            ["Start Game", "Scoreboard", "Settings", "Credits", "Exit Game"]
+        )
 
         # Load assets
         map_surf, _ = ImageLoader.load(
@@ -153,6 +156,7 @@ class Game:
         self._inventory_key_down = False
         self._inventory = Inventory(socket_surf, item_data, (w, h))
 
+<<<<<<< HEAD
         # --------- HOOFDMENU OBJECT ----------
         self._menu = Menu(
             self._screen,
@@ -167,18 +171,20 @@ class Game:
 
     def run(self):
         # ---------- EERST HOOFDMENU ----------
+=======
+    def run(self):
+        # ---------- HOOFDMENU ----------
+>>>>>>> 48ad867ef8a8a8c1ef247544e8bb447f6fa26385
         choice = self._menu.run()
 
         if choice == "Exit Game":
             pygame.quit()
             exit()
 
-        # Later kan je hier scoreboard / settings / credits afhandelen
-        # Voor nu: bij "Start Game" of iets anders → game starten
-
         # ---------- GAME LOOP ----------
         while True:
             dt = self._clock.tick(60) / 1000
+            current_time = pygame.time.get_ticks() / 1000
 
             mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
@@ -190,6 +196,7 @@ class Game:
                     pygame.quit()
                     exit()
 
+<<<<<<< HEAD
                 # Weapon cycling with mouse wheel
                 if event.type == pygame.MOUSEWHEEL:
                     if event.y > 0:
@@ -202,6 +209,8 @@ class Game:
             #         if event.key == pygame.K_e:
             #             self._inventory.toggle()
 
+=======
+>>>>>>> 48ad867ef8a8a8c1ef247544e8bb447f6fa26385
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e and not self._inventory_key_down:
                         self._inventory.toggle()
@@ -213,12 +222,14 @@ class Game:
 
             keys = pygame.key.get_pressed()
 
-            # ---- UPDATE GAME OBJECTS ----
             self._player.update(keys, dt, current_time)
             self._camera.update(keys, self._player.get_speed(), dt)
 
+<<<<<<< HEAD
             # ---- DRAW ----
 
+=======
+>>>>>>> 48ad867ef8a8a8c1ef247544e8bb447f6fa26385
             self._screen.fill((0, 0, 0))
             self._world.draw(self._screen, self._camera)
             self._player.draw(self._screen)
@@ -227,15 +238,17 @@ class Game:
             player_world_pos = self._camera.get_position() + self._player.get_rect().center
             self._minimap.draw(self._screen, player_world_pos)
 
-            # ---- REFRESH DISPLAY ----
             self._inventory.draw(self._screen)
             self._inventory.handle_hotbar_keys(keys)
             self._inventory.update(mouse_pos, mouse_down, mouse_up)
 
             pygame.display.flip()
+<<<<<<< HEAD
 
     def load_icon(path):
         return ImageLoader.load(path, size=(48, 48))[0]
 
     def load_weapon(path):
         return ImageLoader.load(path, size=(96, 96))[0]
+=======
+>>>>>>> 48ad867ef8a8a8c1ef247544e8bb447f6fa26385
