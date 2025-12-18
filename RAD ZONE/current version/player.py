@@ -84,36 +84,6 @@ class Player:
     def get_max_stamina(self):
         return self._max_stamina
 
-    # -------- LOGIC --------
-    def update(self, keys, dt, current_time):
-        # ---- movement / stamina ----
-        moving = keys[pygame.K_z] or keys[pygame.K_q] or keys[pygame.K_s] or keys[pygame.K_d]
-        sprinting = keys[pygame.K_LSHIFT] and moving
-
-        dx = keys[pygame.K_d] - keys[pygame.K_q]
-        dy = keys[pygame.K_s] - keys[pygame.K_z]
-        velocity = pygame.Vector2(dx, dy)
-
-
-
-        # Normalize diagonal movement
-        if velocity.length() > 0:
-            velocity = velocity.normalize()
-        
-        self._move_dir = velocity
-
-
-        # Move player
-        # Move in WORLD space
-        self._pos += velocity * self._speed * dt
-        self._rect.center = self._pos
-
-
-        # Update animation
-        self.animator.update(velocity, dt, current_time)
-
-
-
     # ------------------- STAMINA -------------------
     def restore_stamina(self, amount):
         self._stamina = min(self._stamina + amount, self._max_stamina)
@@ -150,6 +120,9 @@ class Player:
         running = keys[pygame.K_LSHIFT] and moving and not self._exhausted
         if moving:
             velocity = velocity.normalize()
+        
+        self._move_dir = velocity
+
 
         # ---------- STAMINA UPDATE ----------
         self._update_stamina(running, dt, current_time)
@@ -194,6 +167,7 @@ class Player:
         # Weapon in front otherwise
         if self._move_dir.y >= 0:
             self.draw_weapon(screen)
+
 
 
 
