@@ -7,6 +7,7 @@ class Slot:
         self._rect = socket_surf.get_rect(center=center)
         self._item = None
         self._hovered = False
+        self._selected = False
 
     # --- getters ---
     def get_item(self):
@@ -14,6 +15,13 @@ class Slot:
 
     def is_hovered(self):
         return self._hovered
+    
+    def set_selected(self, value):
+        self._selected = value
+
+    def is_selected(self):
+        return self._selected
+
 
     # --- setters ---
     def set_item(self, item):
@@ -45,7 +53,6 @@ class Slot:
             icon_rect = icon.get_rect(center=self._rect.center)
             screen.blit(icon, icon_rect)
 
-            # draw stack count
             if self._item.is_stackable() and self._item.get_amount() > 1:
                 font = pygame.font.SysFont(None, 24)
                 text = font.render(
@@ -57,3 +64,12 @@ class Slot:
                     bottomright=self._rect.bottomright
                 )
                 screen.blit(text, text_rect)
+
+        # ✅ SELECTED BORDER
+        if self._selected:
+            pygame.draw.rect(
+                screen,
+                (0, 0, 0),
+                self._rect.inflate(8, 8),
+                3
+            )

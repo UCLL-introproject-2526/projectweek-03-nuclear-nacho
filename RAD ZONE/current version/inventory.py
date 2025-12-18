@@ -5,6 +5,8 @@ from item import Item
 class Inventory:
     def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg):
 
+        self._selected_hotbar = 0
+
         w, h = screen_size
 
         self._open = False
@@ -109,6 +111,7 @@ class Inventory:
                 item_id,
                 data["icon"],
                 data.get("weapon_surf"),
+                data.get("char_weapon"),
                 data.get("stackable", False),
                 data.get("amount", 1),
                 data.get("max_stack", 1)
@@ -131,12 +134,14 @@ class Inventory:
         self._open = not self._open
         # print("Inventory open:", self._open)
 
-    def handle_hotbar_keys(self, keys):
-        for i in range(5):
-            if keys[getattr(pygame, f"K_{i+1}")]:
-                item = self._hotbar[i].get_item()
-                if item:
-                    self._equipped_item = item
+    def select_next(self):
+        self._selected_hotbar = (self._selected_hotbar + 1) % len(self._hotbar)
+        self._equipped_item = self._hotbar[self._selected_hotbar].get_item()
+
+    def select_previous(self):
+        self._selected_hotbar = (self._selected_hotbar - 1) % len(self._hotbar)
+        self._equipped_item = self._hotbar[self._selected_hotbar].get_item()
+
 
     def update(self, mouse_pos, mouse_down, mouse_up):
         # We will IGNORE mouse_up from game.py and compute edges ourselves,
@@ -208,16 +213,17 @@ class Inventory:
             # draw inventory background
             screen.blit(self._inventory_bg, self._inventory_bg_rect)
 
-            # draw inventory slots
             for slot in self._slots:
                 slot.draw(screen)
-
         # ---------- HOTBAR (always visible) ----------
         screen.blit(self._hotbar_bg, self._hotbar_bg_rect)
 
         for slot in self._hotbar:
             slot.draw(screen)
 
+        for i, slot in enumerate(self._hotbar):
+            slot.set_selected(i == self._selected_hotbar)
+            slot.draw(screen)
         # ---------- DRAGGED ITEM (top layer) ----------
         if self._dragged_item:
             surf = self._dragged_item.get_weapon_surface()
@@ -226,4 +232,6 @@ class Inventory:
 
             rect = surf.get_rect(center=pygame.mouse.get_pos())
             screen.blit(surf, rect)
+        
+
 

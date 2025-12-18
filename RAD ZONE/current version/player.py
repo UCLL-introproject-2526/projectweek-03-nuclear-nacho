@@ -6,11 +6,13 @@ from animation import Animator
 class Player:
     def __init__(self, surf, rect, sound):
 
+        self._move_dir = pygame.Vector2()
 
+        self._equipped_item = None
 
         self._surf = surf
         self._rect = rect
-        
+
         self._pos = pygame.Vector2(self._rect.center)
 
         self.sound = sound
@@ -62,6 +64,10 @@ class Player:
 
     def is_exhausted(self):
         return self._exhausted
+    
+    def set_equipped_item(self, item):
+        self._equipped_item = item
+
 
     # -------- LOGIC --------
     def update(self, keys, dt, current_time):
@@ -73,9 +79,14 @@ class Player:
         dy = keys[pygame.K_s] - keys[pygame.K_z]
         velocity = pygame.Vector2(dx, dy)
 
+
+
         # Normalize diagonal movement
         if velocity.length() > 0:
             velocity = velocity.normalize()
+        
+        self._move_dir = velocity
+
 
         # Move player
         # Move in WORLD space
@@ -125,7 +136,17 @@ class Player:
     def draw(self, screen):
         image = self.animator.get_image()
         rect = image.get_rect(center=screen.get_rect().center)
+
+        # Weapon behind player when moving up
+        if self._move_dir.y < 0:
+            self.draw_weapon(screen)
+
         screen.blit(image, rect)
+
+        # Weapon in front otherwise
+        if self._move_dir.y >= 0:
+            self.draw_weapon(screen)
+
 
 
     def next_weapon(self):
@@ -159,4 +180,50 @@ class Player:
 
     def reload_weapon(self):
         self.weapon.reload()
+
+    def draw_weapon(self, screen):
+        if not self._equipped_item:
+            return
+
+        weapon_surf = self._equipped_item.get_char_weapon_surface()
+        if not weapon_surf:
+            return
+
+        # 🔽 SCALE WEAPON
+        SCALE = 0.6
+        w, h = weapon_surf.get_size()
+        weapon_surf = pygame.transform.smoothscale(
+            weapon_surf,
+            (int(w * SCALE), int(h * SCALE))
+        )
+
+        player_center = pygame.Vector2(screen.get_rect().center)
+        mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
+        direction = mouse_pos - player_center
+
+        if direction.length() == 0:
+            return
+
+        angle = direction.angle_to(pygame.Vector2(1, 0))
+        weapon = weapon_surf
+
+        # Flip when aiming left
+        if direction.x < 0:
+            weapon = pygame.transform.flip(weapon, True, False)
+            angle += 180
+
+        rotated = pygame.transform.rotate(weapon, angle)
+
+        # Hand-side offset based on cursor position
+        if direction.x >= 0:
+            offset = pygame.Vector2(20, 20)    # right side
+        else:
+            offset = pygame.Vector2(-20, 20)   # left side
+
+        rect = rotated.get_rect(center=player_center + offset)
+
+        screen.blit(rotated, rect)
+
+
+
     
