@@ -161,10 +161,6 @@ class Game:
             self._screen,
             ["Start Game", "Scoreboard", "Settings", "Credits", "Exit Game"]
         )
-    def run(self):
-        while True:
-            dt = self._clock.tick(60) / 1000  # Delta time in seconds
-            current_time = pygame.time.get_ticks() / 1000  # Current time in seconds
 
             # ---- EVENT HANDLING ----
 
@@ -179,8 +175,8 @@ class Game:
 
         # ---------- GAME LOOP ----------
         while True:
-            dt = self._clock.tick(60) / 1000
-            current_time = pygame.time.get_ticks() / 1000
+            dt = self._clock.tick(60) / 1000 # Delta time in seconds
+            current_time = pygame.time.get_ticks() / 1000 # Current time in seconds
 
             mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
