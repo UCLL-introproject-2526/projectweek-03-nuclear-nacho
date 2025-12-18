@@ -7,7 +7,7 @@ class SoundManager:
             "pistol": {
                 "shoot": pygame.mixer.Sound("RAD ZONE/Sound-FX/MP3/shoot_pistol.mp3"),
                 "reload": pygame.mixer.Sound("RAD ZONE/Sound-FX/MP3/reload_pistol.mp3"),
-                "equip": pygame.mixer.Sound("RAD ZONE\Sound-FX\MP3/equip_pistol.mp3"),
+                "equip": pygame.mixer.Sound("RAD ZONE/Sound-FX/MP3/equip_pistol.mp3"),
             },
             "rifle": {
                 "shoot": pygame.mixer.Sound("RAD ZONE/Sound-FX/MP3/shoot_rifle_single_shot.mp3"),
