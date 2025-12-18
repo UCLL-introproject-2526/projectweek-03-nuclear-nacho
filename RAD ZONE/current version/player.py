@@ -77,6 +77,12 @@ class Player:
     def take_damage(self, damage):
         self._health -= damage
         self._health = max(0, self._health)
+        
+    def get_stamina(self):
+        return self._stamina
+
+    def get_max_stamina(self):
+        return self._max_stamina
 
     # -------- LOGIC --------
     def update(self, keys, dt, current_time):
