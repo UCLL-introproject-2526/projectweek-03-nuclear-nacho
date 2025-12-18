@@ -34,9 +34,10 @@ class Game:
         # --------- HOOFDMENU OBJECT ----------
         self._menu = Menu(
             self._screen,
-            ["Start Game", "Scoreboard", "Settings", "Credits", "Exit Game"]
+            ["Play", "Scoreboard", "Settings", "Credits", "Quit"]
         )
 
+        # --------- LOAD ASSETS ----------
         # Load assets
 
 
@@ -74,7 +75,7 @@ class Game:
             ),
         ]
 
-        # Create objects
+        # --------- CREATE OBJECTS ----------
         self._player = Player(char_surf, char_rect, self.sound)
         self._camera = Camera(w, h)
 
@@ -179,27 +180,19 @@ class Game:
         self._last_stabbed_zombies = set()  # Track which zombies we've hit this stab
         self._last_f_press_time = -1  # Track when F was last pressed for damage
 
-        # --------- HOOFDMENU OBJECT ----------
-        self._menu = Menu(
-            self._screen,
-            ["Start Game", "Scoreboard", "Settings", "Credits", "Exit Game"]
-        )
-
-            # ---- EVENT HANDLING ----
-
-        # ---------- EERST HOOFDMENU ----------
     def run(self):
         # ---------- HOOFDMENU ----------
         choice = self._menu.run()
+        print("menu choice:", choice)
 
-        if choice == "Exit Game":
+        if choice == "Quit":
             pygame.quit()
             exit()
 
         # ---------- GAME LOOP ----------
         while True:
-            dt = self._clock.tick(60) / 1000 # Delta time in seconds
-            current_time = pygame.time.get_ticks() / 1000 # Current time in seconds
+            dt = self._clock.tick(60) / 1000  # Delta time in seconds
+            current_time = pygame.time.get_ticks() / 1000  # Current time in seconds
 
             mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
@@ -218,11 +211,6 @@ class Game:
                     else:
                         self._player.previous_weapon()
 
-            # ---- INPUT STATES ----
-            # if event.type == pygame.KEYDOWN:
-            #         if event.key == pygame.K_e:
-            #             self._inventory.toggle()
-
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e and not self._inventory_key_down:
                         self._inventory.toggle()
@@ -234,6 +222,7 @@ class Game:
 
             keys = pygame.key.get_pressed()
 
+            # ---- UPDATE ----
             self._player.update(keys, dt, current_time)
             self._camera.update(pygame.Vector2(self._player.get_rect().center))
             
@@ -282,7 +271,6 @@ class Game:
                         self._player.take_damage(zombie._damage_per_second * dt)
 
             # ---- DRAW ----
-
             self._screen.fill((0, 0, 0))
             self._world.draw(self._screen, self._camera)
             
@@ -314,9 +302,3 @@ class Game:
             self._inventory.update(mouse_pos, mouse_down, mouse_up)
 
             pygame.display.flip()
-
-    # def load_icon(path):
-    #     return ImageLoader.load(path, size=(48, 48))[0]
-
-    # def load_weapon(path):
-    #     return ImageLoader.load(path, size=(96, 96))[0]

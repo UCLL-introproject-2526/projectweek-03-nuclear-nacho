@@ -168,28 +168,34 @@ class Inventory:
                     target = slot
                     break
 
-            target_item = target.get_item()
-
-            if target_item is None:
-                target.set_item(self._dragged_item)
-
-            elif target_item.can_stack_with(self._dragged_item):
-                added = target_item.add_to_stack(
-                    self._dragged_item.get_amount()
-                )
-                if added < self._dragged_item.get_amount():
-                    self._dragged_item.remove_from_stack(added)
-                    self._drag_origin.set_item(self._dragged_item)
+            # ---------- DROPPED OUTSIDE ANY SLOT ----------
+            if target is None:
+                # put item back where it came from
+                self._drag_origin.set_item(self._dragged_item)
 
             else:
-                # swap
-                temp = target_item
-                target.set_item(self._dragged_item)
-                self._drag_origin.set_item(temp)
+                target_item = target.get_item()
 
+                if target_item is None:
+                    target.set_item(self._dragged_item)
+
+                elif target_item.can_stack_with(self._dragged_item):
+                    added = target_item.add_to_stack(
+                        self._dragged_item.get_amount()
+                    )
+                    if added < self._dragged_item.get_amount():
+                        self._dragged_item.remove_from_stack(added)
+                        self._drag_origin.set_item(self._dragged_item)
+
+                else:
+                    # swap
+                    temp = target_item
+                    target.set_item(self._dragged_item)
+                    self._drag_origin.set_item(temp)
 
             self._dragged_item = None
             self._drag_origin = None
+
 
         # Drag follows mouse while holding
         if self._dragged_item:
