@@ -4,8 +4,9 @@ from item import Item
 
 
 class Inventory:
-    def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg):
+    def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg, player):
 
+        self._player = player
         self._selected_hotbar = 0
 
         w, h = screen_size
