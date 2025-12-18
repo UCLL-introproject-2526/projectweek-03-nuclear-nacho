@@ -1,42 +1,75 @@
 import pygame
 from sys import exit
+from hoofdscherm import ImageButton, scale_image  # hergebruik van jouw ImageButton class
 
 class DeathScreen:
     def __init__(self, screen, zombies_killed):
         self.screen = screen
-        self.zombies_killed = zombies_killed
-        self.font = pygame.font.SysFont(None, 64)
-        self.small_font = pygame.font.SysFont(None, 40)
-        self.button_rect = pygame.Rect(0, 0, 200, 60)
-        w, h = self.screen.get_size()
-        self.button_rect.center = (w // 2, h // 2 + 100)
+        self.clock = pygame.time.Clock()
+        self.kills = zombies_killed
+        self.width, self.height = screen.get_size()
 
-    def run(self):
-        clock = pygame.time.Clock()
+        # ----------------------------
+        # Achtergrond overlay
+        # ----------------------------
+        self.overlay = pygame.Surface((self.width, self.height))
+        self.overlay.set_alpha(150)  # doorzichtige overlay
+        self.overlay.fill((0, 0, 0))  # zwart met transparantie
+
+        # ----------------------------
+        # Buttons
+        # ----------------------------
+        base = "RAD ZONE/UI/Menu/"
+        button_width = self.width // 4
+        start_y = 350
+        spacing = int(self.height * 0.12)
+        center_x = self.width // 2
+
+        # Knoppen
+        self.buttons = {}
+        button_names = ["Play", "CommitScore", "Quit"]
+
+        for i, name in enumerate(button_names):
+            idle = scale_image(pygame.image.load(base + f"{name.lower()}_idle.png").convert_alpha(), width=button_width)
+            pressed = scale_image(pygame.image.load(base + f"{name.lower()}_pressed.png").convert_alpha(), width=button_width)
+            self.buttons[name] = ImageButton(center_x, start_y + spacing * i, idle, pressed)
+
+        # Fonts
+        self.font_big = pygame.font.SysFont(None, 80)
+        self.font_small = pygame.font.SysFont(None, 40)
+
+    def draw(self, game_surface):
+        # Achtergrond overlay
+        self.screen.blit(game_surface, (0, 0))
+        self.screen.blit(self.overlay, (0, 0))
+
+        # Titel en score
+        title = self.font_big.render("YOU DIED", True, (200, 0, 0))
+        score = self.font_small.render(f"Zombies killed: {self.kills}", True, (255, 255, 255))
+
+        self.screen.blit(title, title.get_rect(center=(self.width // 2, 150)))
+        self.screen.blit(score, score.get_rect(center=(self.width // 2, 250)))
+
+        # Draw buttons
+        for name, btn in self.buttons.items():
+            btn.draw(self.screen)
+
+        pygame.display.flip()
+
+    def run(self, game_surface):
         while True:
-            dt = clock.tick(60) / 1000
-            mouse_pos = pygame.mouse.get_pos()
-            mouse_pressed = pygame.mouse.get_pressed()[0]
+            self.clock.tick(60)
+            self.draw(game_surface)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
 
-            # Tekst
-            self.screen.fill((0, 0, 0))
-            title_text = self.font.render("You Died!", True, (255, 0, 0))
-            score_text = self.small_font.render(f"Zombies killed: {self.zombies_killed}", True, (255, 255, 255))
-            self.screen.blit(title_text, title_text.get_rect(center=(self.screen.get_width()//2, self.screen.get_height()//2 - 100)))
-            self.screen.blit(score_text, score_text.get_rect(center=(self.screen.get_width()//2, self.screen.get_height()//2 - 30)))
+                for name, btn in self.buttons.items():
+                    if btn.handle_event(event):
+                        return name
 
-            # Button
-            pygame.draw.rect(self.screen, (200, 200, 200), self.button_rect)
-            button_text = self.small_font.render("Return", True, (0, 0, 0))
-            self.screen.blit(button_text, button_text.get_rect(center=self.button_rect.center))
-
-            # Check klik
-            if mouse_pressed and self.button_rect.collidepoint(mouse_pos):
-                return "Return"
-
-            pygame.display.flip()
+                # Escape terug naar hoofdmenu (optioneel)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    return "Quit"
