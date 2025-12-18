@@ -266,5 +266,5 @@ class Game:
     # ---------------- ZOMBIE ATTACKS ----------------
     def _handle_zombie_attacks(self, player_pos, dt):
         for zombie in self._zombie_spawner.get_zombies():
-            if zombie.is_attacking() and (zombie.get_position() - player_pos).length() < 60:
+            if zombie.is_attacking() and (zombie.get_position() - player_pos).length() < 80:
                 self._player.take_damage(zombie._damage_per_second * dt)
