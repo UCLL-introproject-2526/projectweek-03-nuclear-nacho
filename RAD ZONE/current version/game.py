@@ -37,6 +37,8 @@ class Game:
         )
 
         # Load assets
+
+
         map_surf, _ = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Game_building_test.png",
             size=(7680, 6400)
@@ -153,8 +155,23 @@ class Game:
             size=(64, 64)
         )[0]
 
+        inventory_bg = ImageLoader.load(
+            "RAD ZONE/current version/Graphics/Inventory_background.png"
+        )[0]
+
+        hotbar_bg = ImageLoader.load(
+            "RAD ZONE/current version/Graphics/Hotbar_background.png"
+        )[0]
+
+        
         self._inventory_key_down = False
-        self._inventory = Inventory(socket_surf, item_data, (w, h))
+        self._inventory = Inventory(
+            socket_surf,
+            item_data,
+            (w, h),
+            inventory_bg,
+            hotbar_bg
+        )
 
         # --------- HOOFDMENU OBJECT ----------
         self._menu = Menu(
