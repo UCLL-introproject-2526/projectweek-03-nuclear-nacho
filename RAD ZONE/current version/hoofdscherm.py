@@ -10,7 +10,7 @@ class Menu:
         self.width, self.height = self.screen.get_size()
 
         # Achtergrond
-        self.background = pygame.image.load("RAD ZONE/current version/Graphics/menu_background.png").convert()
+        self.background = pygame.image.load("RAD ZONE\\UI\\Menu\\achtergrond menu.png").convert()
         self.background = pygame.transform.scale(self.background, (self.width, self.height))
 
         # Fonts
