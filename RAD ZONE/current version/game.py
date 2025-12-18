@@ -162,6 +162,9 @@ class Game:
             ["Start Game", "Scoreboard", "Settings", "Credits", "Exit Game"]
         )
 
+            # ---- EVENT HANDLING ----
+
+        # ---------- EERST HOOFDMENU ----------
     def run(self):
         # ---------- HOOFDMENU ----------
         choice = self._menu.run()
