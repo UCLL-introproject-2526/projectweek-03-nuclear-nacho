@@ -18,6 +18,9 @@ def load_building(path, size, x, y):
     surf = ImageLoader.load(path, size=size)[0]
     return surf, pygame.Vector2(x, y)
 
+def load_char_weapon(path):
+    return ImageLoader.load(path, size=(96, 96))[0]
+
 
 class Game:
     def __init__(self):
@@ -88,18 +91,35 @@ class Game:
         def load_weapon(path): return ImageLoader.load(path, size=(96, 96))[0]
 
         item_data = {
-            "pistol": {"icon": load_icon("RAD ZONE/current version/Graphics/pistool.png"),
-                       "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/pistool.png")},
-            "shotgun": {"icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
-                        "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png")},
-            "rifle": {"icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
-                      "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png")},
-            "revolver": {"icon": load_icon("RAD ZONE/current version/Graphics/revolver.png"),
-                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/revolver.png")},
-            "crossbow": {"icon": load_icon("RAD ZONE/current version/Graphics/crossbow.png"),
-                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/crossbow.png")},
-            "knife": {"icon": load_icon("RAD ZONE/current version/Graphics/knife.png"),
-                      "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png")}
+            "pistol": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/pistool.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/pistool.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_pistool.png")
+            },
+            "shotgun": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_shotgun.png")
+            },
+            "rifle": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_machine_gun.png")
+            },
+            "revolver": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/revolver.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/revolver.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_revolver.png")
+            },
+            "crossbow": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/crossbow.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/crossbow.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_crossbow.png")
+            },
+            "knife": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/knife.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png")
+            }
         }
 
         iodine_icon = load_icon("RAD ZONE/current version/Graphics/Iodine pills.png")
@@ -137,6 +157,27 @@ class Game:
             mouse_down = mouse_pressed[0]
             mouse_up = not mouse_pressed[0]
 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Weapon cycling with mouse wheel
+                if event.type == pygame.MOUSEWHEEL:
+                    if event.y > 0:
+                        self._inventory.select_next()
+                    else:
+                        self._inventory.select_previous()
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_e and not self._inventory_key_down:
+                        self._inventory.toggle()
+                        self._inventory_key_down = True
+
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_e:
+                        self._inventory_key_down = False
+
             keys = pygame.key.get_pressed()
             self._handle_events()
 
@@ -155,8 +196,13 @@ class Game:
             # DRAW
             self._screen.fill((0, 0, 0))
             self._world.draw(self._screen, self._camera)
+            self._player.set_equipped_item(self._inventory.get_equipped_item())
 
-            drawables = [("player", self._player, player_pos.y)]
+            
+            # Draw player and zombies with proper z-ordering (by y position)
+            # Collect all drawable objects
+            drawables = []
+            drawables.append(("player", self._player, player_pos.y))
             for zombie in self._zombie_spawner.get_zombies():
                 drawables.append(("zombie", zombie, zombie.get_position().y))
             for obj_type, obj, _ in sorted(drawables, key=lambda x: x[2]):
@@ -164,18 +210,21 @@ class Game:
                     obj.draw(self._screen)
                 else:
                     obj.draw(self._screen, self._camera)
-
-            # ---------- UI ----------
+            
             self._ui.draw(
                 self._screen,
-                self._player.get_health() / self._player.get_max_health(),  # 0-1
-                self._player.get_stamina_display(),  # 0-1
-                dt=dt
+                self._player.get_health(),
+                self._player.get_max_health(),
+                self._player.get_stamina(),
+                100
             )
 
-            self._minimap.draw(self._screen, player_pos)
+
+            player_world_pos = pygame.Vector2(self._player.get_rect().center)
+            self._minimap.draw(self._screen, player_world_pos)
+
+
             self._inventory.draw(self._screen)
-            self._inventory.handle_hotbar_keys(keys)
             self._inventory.update(mouse_pos, mouse_down, mouse_up)
 
             pygame.display.flip()

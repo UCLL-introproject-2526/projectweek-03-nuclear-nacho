@@ -1,10 +1,11 @@
 class Item:
-    def __init__(self, item_id, icon_surf, weapon_surf=None,
+    def __init__(self, item_id, icon_surf, weapon_surf=None, char_weapon_surf=None,
                  stackable=False, amount=1, max_stack=1):
 
         self._id = item_id
         self._icon = icon_surf
         self._weapon = weapon_surf
+        self._char_weapon = char_weapon_surf
 
         self._stackable = stackable
         self._amount = amount
@@ -13,6 +14,10 @@ class Item:
         self._rect = self._icon.get_rect()
 
     # --- getters ---
+    
+    def get_char_weapon_surface(self):
+        return self._char_weapon
+
     def get_id(self):
         return self._id
 

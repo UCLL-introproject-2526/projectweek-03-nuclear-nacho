@@ -4,18 +4,9 @@ from item import Item
 
 
 class Inventory:
-    def __init__(self, socket_surf, item_data, screen_size,
-                 inventory_bg, hotbar_bg, player):
-        """
-        Inventory systeem.
-        - socket_surf: lege slot visual
-        - item_data: dictionary van items (icon, weapon_surf, stackable, amount, max_stack)
-        - screen_size: schermbreedte/hoogte voor positionering
-        - inventory_bg: achtergrond van inventory
-        - hotbar_bg: achtergrond van hotbar
-        - player: referentie naar speler object
-        """
-        self._player = player
+    def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg):
+
+        self._selected_hotbar = 0
 
         w, h = screen_size
 
@@ -93,6 +84,7 @@ class Inventory:
                 item_id,
                 data["icon"],
                 data.get("weapon_surf"),
+                data.get("char_weapon"),
                 data.get("stackable", False),
                 data.get("amount", 1),
                 data.get("max_stack", 1)
@@ -108,13 +100,14 @@ class Inventory:
     def toggle(self):
         self._open = not self._open
 
-    # ---------- HOTBAR ----------
-    def handle_hotbar_keys(self, keys):
-        for i in range(5):
-            if keys[getattr(pygame, f"K_{i+1}")]:
-                item = self._hotbar[i].get_item()
-                if item:
-                    self._equipped_item = item
+    def select_next(self):
+        self._selected_hotbar = (self._selected_hotbar + 1) % len(self._hotbar)
+        self._equipped_item = self._hotbar[self._selected_hotbar].get_item()
+
+    def select_previous(self):
+        self._selected_hotbar = (self._selected_hotbar - 1) % len(self._hotbar)
+        self._equipped_item = self._hotbar[self._selected_hotbar].get_item()
+
 
     # ---------- UPDATE ----------
     def update(self, mouse_pos, mouse_down, mouse_up):
@@ -207,16 +200,22 @@ class Inventory:
         # Inventory background + slots
         if self._open:
             screen.blit(self._inventory_bg, self._inventory_bg_rect)
+
             for slot in self._slots:
                 slot.draw(screen)
-
-        # Hotbar always visible
+        # ---------- HOTBAR (always visible) ----------
         screen.blit(self._hotbar_bg, self._hotbar_bg_rect)
         for slot in self._hotbar:
             slot.draw(screen)
 
-        # Dragged item on top layer
+        for i, slot in enumerate(self._hotbar):
+            slot.set_selected(i == self._selected_hotbar)
+            slot.draw(screen)
+        # ---------- DRAGGED ITEM (top layer) ----------
         if self._dragged_item:
             surf = self._dragged_item.get_weapon_surface() or self._dragged_item.get_icon()
             rect = surf.get_rect(center=pygame.mouse.get_pos())
             screen.blit(surf, rect)
+        
+
+
