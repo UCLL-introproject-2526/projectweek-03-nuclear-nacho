@@ -1,5 +1,6 @@
 import pygame
 from weapon import Weapon
+from animation import Animator
 
 
 class Player:
@@ -7,6 +8,7 @@ class Player:
         self._surf = surf
         self._rect = rect
         self.sound = sound
+        self.animator = Animator("RAD ZONE/current version/Graphics/player")
 
         self._was_mouse_pressed = False  # tracks mouse state for single-shot
         self.available_weapons = [
@@ -61,6 +63,24 @@ class Player:
         moving = keys[pygame.K_z] or keys[pygame.K_q] or keys[pygame.K_s] or keys[pygame.K_d]
         sprinting = keys[pygame.K_LSHIFT] and moving
 
+        dx = keys[pygame.K_d] - keys[pygame.K_q]
+        dy = keys[pygame.K_s] - keys[pygame.K_z]
+        velocity = pygame.Vector2(dx, dy)
+
+        # Normalize diagonal movement
+        if velocity.length() > 0:
+            velocity = velocity.normalize()
+
+        # Move player
+        self._rect.centerx += velocity.x * self._speed * dt
+        self._rect.centery += velocity.y * self._speed * dt
+
+        # Update animation
+        self.animator.update(velocity, dt)
+
+
+
+
         if self._stamina <= self._exhaust_at:
             self._exhausted = True
         elif self._stamina >= self._recover_at:
@@ -95,7 +115,10 @@ class Player:
 
 
     def draw(self, screen):
-        screen.blit(self._surf, self._rect)
+        image = self.animator.get_image()
+        rect = image.get_rect(center=self._rect.center)
+        screen.blit(image, rect)
+
 
     def next_weapon(self):
         if not self.available_weapons:
