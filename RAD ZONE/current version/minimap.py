@@ -19,12 +19,13 @@ class Minimap:
                 pygame.transform.smoothscale(
                     surf,
                     (int(surf.get_width() * self._zoom),
-                     int(surf.get_height() * self._zoom))
+                    int(surf.get_height() * self._zoom))
                 ),
-                pos
+                pygame.Vector2(pos)   # <-- FIX
             )
             for surf, pos in buildings
         ]
+
 
     def draw(self, screen, player_world_pos):
         self._surf.fill((0, 0, 0))
