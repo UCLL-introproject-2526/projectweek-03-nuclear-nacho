@@ -13,6 +13,7 @@ from hoofdscherm import Menu
 from Zombie import ZombieSpawner
 from scoreboard import Scoreboard
 from pause_menu import PauseMenu
+from death_screen import DeathScreen
 
 
 def load_building(path, size, x, y):
