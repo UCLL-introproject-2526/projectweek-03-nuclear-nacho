@@ -1,7 +1,6 @@
 # import pygame
 # import time
 
-
 # pygame.init()
 # clock = pygame.time.Clock()
 # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
