@@ -10,6 +10,7 @@ from assets import ImageLoader
 from sound_manager import SoundManager
 from inventory import Inventory
 from hoofdscherm import Menu
+from Zombie import ZombieSpawner
 
 
 def load_building(path, size, x, y):
@@ -80,6 +81,7 @@ class Game:
         self._world = World(map_surf, buildings)
         self._ui = UI(health, stamina, outline)
         self._minimap = Minimap(map_surf, buildings, (w, h))
+        self._zombie_spawner = ZombieSpawner()
 
         def load_icon(path):
             return ImageLoader.load(path, size=(48, 48))[0]
@@ -170,6 +172,12 @@ class Game:
             inventory_bg,
             hotbar_bg
         )
+        
+        # Stab tracking for damage
+        self._last_stab_time = -1
+        self._stab_damage_cooldown = 0.1  # Prevent multiple hits per stab
+        self._last_stabbed_zombies = set()  # Track which zombies we've hit this stab
+        self._last_f_press_time = -1  # Track when F was last pressed for damage
 
         # --------- HOOFDMENU OBJECT ----------
         self._menu = Menu(
@@ -228,13 +236,74 @@ class Game:
 
             self._player.update(keys, dt, current_time)
             self._camera.update(pygame.Vector2(self._player.get_rect().center))
+            
+            # Update zombies
+            player_pos = pygame.Vector2(self._player.get_rect().center)
+            self._zombie_spawner.update(player_pos, dt, current_time)
+            
+            # Check if knife (stab) is being used to damage zombies
+            # Detect when F is pressed (going from not pressed to pressed)
+            f_pressed = keys[pygame.K_f]
+            if f_pressed and not hasattr(self, '_f_key_was_pressed'):
+                self._f_key_was_pressed = False
+            
+            if f_pressed and not self._f_key_was_pressed and self._player.weapon.name == "knife":
+                # F just pressed and we have knife
+                self._last_f_press_time = current_time
+                self._last_stabbed_zombies = set()  # Reset hit zombies
+                self._f_key_was_pressed = True
+                print(f"[STAB] F pressed! Weapon: {self._player.weapon.name}")
+            elif not f_pressed:
+                self._f_key_was_pressed = False
+            
+            # Apply damage if F was recently pressed (within 0.5 seconds for animation duration)
+            if current_time - self._last_f_press_time < 0.5 and self._player.weapon.name == "knife":
+                damage_count = 0
+                for zombie in self._zombie_spawner.get_zombies():
+                    if zombie not in self._last_stabbed_zombies and not zombie.is_dead():
+                        zombie_pos = zombie.get_position()
+                        distance = (zombie_pos - player_pos).length()
+                        
+                        if distance < 100:
+                            knockback_dir = (zombie_pos - player_pos)
+                            zombie.take_damage(50, knockback_dir, current_time)
+                            self._last_stabbed_zombies.add(zombie)
+                            damage_count += 1
+                            print(f"[HIT] Zombie damaged! Health: {zombie.get_health()}")
+                
+                if damage_count > 0:
+                    print(f"[DAMAGE] Hit {damage_count} zombies")
+            
+            # Check zombie attacks on player and apply damage
+            for zombie in self._zombie_spawner.get_zombies():
+                if zombie.is_attacking():
+                    distance = (zombie.get_position() - player_pos).length()
+                    if distance < 60:
+                        self._player.take_damage(zombie._damage_per_second * dt)
 
             # ---- DRAW ----
 
             self._screen.fill((0, 0, 0))
             self._world.draw(self._screen, self._camera)
-            self._player.draw(self._screen)
-            self._ui.draw(self._screen, self._player.get_stamina())
+            
+            # Draw player and zombies with proper z-ordering (by y position)
+            # Collect all drawable objects
+            drawables = []
+            drawables.append(("player", self._player, player_pos.y))
+            for zombie in self._zombie_spawner.get_zombies():
+                drawables.append(("zombie", zombie, zombie.get_position().y))
+            
+            # Sort by y position (lower on screen = drawn last = on top)
+            drawables.sort(key=lambda x: x[2])
+            
+            # Draw all objects
+            for obj_type, obj, _ in drawables:
+                if obj_type == "player":
+                    self._player.draw(self._screen)
+                else:
+                    obj.draw(self._screen, self._camera)
+            
+            self._ui.draw(self._screen, self._player.get_health(), self._player.get_max_health())
 
             player_world_pos = pygame.Vector2(self._player.get_rect().center)
             self._minimap.draw(self._screen, player_world_pos)

@@ -17,12 +17,13 @@ class Player:
         self.animator = Animator("RAD ZONE/current version/Graphics/player")
 
         self._was_mouse_pressed = False  # tracks mouse state for single-shot
+        self._f_was_pressed = False  # tracks F key state for single-shot stab
         self.available_weapons = [
+            "knife",
             "pistol",
             "rifle",
             "revolver",
-            "shotgun",
-            "knife"
+            "shotgun"
         ]
 
         self.current_weapon_index = 0
@@ -42,6 +43,10 @@ class Player:
         self._exhaust_at = 0
         self._recover_at = 20
         self._exhausted = False
+        
+        # Health system
+        self._max_health = 100
+        self._health = self._max_health
 
         self._base_speed = 400
         self._sprint_speed = 600
@@ -62,6 +67,16 @@ class Player:
 
     def is_exhausted(self):
         return self._exhausted
+    
+    def get_health(self):
+        return self._health
+    
+    def get_max_health(self):
+        return self._max_health
+    
+    def take_damage(self, damage):
+        self._health -= damage
+        self._health = max(0, self._health)
 
     # -------- LOGIC --------
     def update(self, keys, dt, current_time):
@@ -84,7 +99,7 @@ class Player:
 
 
         # Update animation
-        self.animator.update(velocity, dt)
+        self.animator.update(velocity, dt, current_time)
 
 
 
@@ -117,6 +132,12 @@ class Player:
         # ---- Reload with R ----
         if keys[pygame.K_r]:
             self.reload_weapon()
+
+        # ---- STAB with F ----
+        f_pressed = keys[pygame.K_f]
+        if f_pressed and not self._f_was_pressed:
+            self.animator.play_stab(current_time, duration=0.4)
+        self._f_was_pressed = f_pressed
 
 
 
