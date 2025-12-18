@@ -2,109 +2,93 @@ import pygame
 from slot import Slot
 from item import Item
 
+
 class Inventory:
-    def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg):
+    def __init__(self, socket_surf, item_data, screen_size,
+                 inventory_bg, hotbar_bg, player):
+        """
+        Inventory systeem.
+        - socket_surf: lege slot visual
+        - item_data: dictionary van items (icon, weapon_surf, stackable, amount, max_stack)
+        - screen_size: schermbreedte/hoogte voor positionering
+        - inventory_bg: achtergrond van inventory
+        - hotbar_bg: achtergrond van hotbar
+        - player: referentie naar speler object
+        """
+        self._player = player
 
         w, h = screen_size
 
+        # Open state
         self._open = False
+
+        # Slots
         self._slots = []
         self._hotbar = []
 
+        # Drag & drop
         self._dragged_item = None
         self._drag_origin = None
         self._equipped_item = None
         self._mouse_down_prev = False
 
-        # ---------- UI SCALE ----------
+        # UI SCALE
         self._ui_scale = 1.35
         base_size, base_gap = 64, 10
-
         size = int(base_size * self._ui_scale)
         gap = int(base_gap * self._ui_scale)
 
-        self._socket_surf = pygame.transform.scale(
-            socket_surf,
-            (size, size)
-        )
+        self._socket_surf = pygame.transform.scale(socket_surf, (size, size))
 
-        # ---------- INVENTORY GRID ----------
+        # Inventory grid
         cols, rows = 4, 4
         inv_width = cols * size + (cols - 1) * gap
         inv_height = rows * size + (rows - 1) * gap
-
         start_x = (w - inv_width) // 2 + size // 2
         start_y = (h - inv_height) // 2 + size // 2
 
-        # ---------- HOTBAR ----------
+        # Hotbar
         hotbar_slots = 5
         hotbar_width = hotbar_slots * size + (hotbar_slots - 1) * gap
         hotbar_y = h - int(100 * self._ui_scale)
         hotbar_start_x = (w - hotbar_width) // 2 + size // 2
 
-        # ---------- BACKGROUNDS ----------
+        # Backgrounds
         bg_padding_x = int(size * 1.6)
         bg_padding_y = int(size * 1.6)
-
         self._inventory_bg = pygame.transform.scale(
-            inventory_bg,
-            (
-                inv_width + bg_padding_x,
-                inv_height + bg_padding_y
-            )
+            inventory_bg, (inv_width + bg_padding_x, inv_height + bg_padding_y)
         )
-
 
         hotbar_padding_x = int(size * 0.4)
         hotbar_padding_y = int(size * 0.3)
-
         self._hotbar_bg = pygame.transform.scale(
-            hotbar_bg,
-            (
-                hotbar_width + hotbar_padding_x,
-                size + hotbar_padding_y
-            )
+            hotbar_bg, (hotbar_width + hotbar_padding_x, size + hotbar_padding_y)
         )
 
-
-        offset_x = int(size * 0.3)   # right
-        offset_y = int(size * 0.67)   # down
-
+        offset_x = int(size * 0.3)
+        offset_y = int(size * 0.67)
         self._inventory_bg_rect = self._inventory_bg.get_rect(
-            center=(
-                w // 2 + offset_x,
-                h // 2 + offset_y
-            )
+            center=(w // 2 + offset_x, h // 2 + offset_y)
         )
+        self._hotbar_bg_rect = self._hotbar_bg.get_rect(center=(w // 2, hotbar_y))
 
-
-        self._hotbar_bg_rect = self._hotbar_bg.get_rect(
-            center=(w // 2, hotbar_y)
-        )
-
-        # ---------- CREATE INVENTORY SLOTS ----------
+        # Create inventory slots
         for row in range(rows):
             for col in range(cols):
-                pos = (
-                    start_x + col * (size + gap),
-                    start_y + row * (size + gap)
-                )
+                pos = (start_x + col * (size + gap), start_y + row * (size + gap))
                 self._slots.append(Slot(self._socket_surf, pos))
 
-        # ---------- CREATE HOTBAR SLOTS ----------
+        # Create hotbar slots
         for i in range(hotbar_slots):
-            pos = (
-                hotbar_start_x + i * (size + gap),
-                hotbar_y
-            )
+            pos = (hotbar_start_x + i * (size + gap), hotbar_y)
             self._hotbar.append(Slot(self._socket_surf, pos))
 
-        # ---------- SPAWN ITEMS ----------
+        # Spawn items in slots
         slot_index = 0
         for item_id, data in item_data.items():
             if slot_index >= len(self._slots):
                 break
-
             item = Item(
                 item_id,
                 data["icon"],
@@ -113,24 +97,18 @@ class Inventory:
                 data.get("amount", 1),
                 data.get("max_stack", 1)
             )
-
             self._slots[slot_index].set_item(item)
             slot_index += 1
-
-
 
     # ---------- GETTERS ----------
     def get_equipped_item(self):
         return self._equipped_item
 
-    # ---------- LOGIC ----------
-    # def toggle(self):
-    #     self._open = not self._open
-
+    # ---------- TOGGLE ----------
     def toggle(self):
         self._open = not self._open
-        # print("Inventory open:", self._open)
 
+    # ---------- HOTBAR ----------
     def handle_hotbar_keys(self, keys):
         for i in range(5):
             if keys[getattr(pygame, f"K_{i+1}")]:
@@ -138,20 +116,19 @@ class Inventory:
                 if item:
                     self._equipped_item = item
 
+    # ---------- UPDATE ----------
     def update(self, mouse_pos, mouse_down, mouse_up):
-        # We will IGNORE mouse_up from game.py and compute edges ourselves,
-        # because your current mouse_up value is "not pressed" every frame.
         press = mouse_down and not self._mouse_down_prev
         release = (not mouse_down) and self._mouse_down_prev
         self._mouse_down_prev = mouse_down
 
         slots = self._hotbar + (self._slots if self._open else [])
 
-        # Update hover first
+        # Update hover states
         for slot in slots:
             slot.update(mouse_pos)
 
-        # -------- PICK UP on mouse press --------
+        # PICK UP
         if press and not self._dragged_item:
             for slot in slots:
                 if slot.is_hovered() and slot.get_item():
@@ -160,7 +137,7 @@ class Inventory:
                     slot.clear_item()
                     break
 
-        # -------- DROP on mouse release --------
+        # DROP
         if release and self._dragged_item:
             target = None
             for slot in slots:
@@ -168,25 +145,17 @@ class Inventory:
                     target = slot
                     break
 
-            # ---------- DROPPED OUTSIDE ANY SLOT ----------
             if target is None:
-                # put item back where it came from
                 self._drag_origin.set_item(self._dragged_item)
-
             else:
                 target_item = target.get_item()
-
                 if target_item is None:
                     target.set_item(self._dragged_item)
-
                 elif target_item.can_stack_with(self._dragged_item):
-                    added = target_item.add_to_stack(
-                        self._dragged_item.get_amount()
-                    )
+                    added = target_item.add_to_stack(self._dragged_item.get_amount())
                     if added < self._dragged_item.get_amount():
                         self._dragged_item.remove_from_stack(added)
                         self._drag_origin.set_item(self._dragged_item)
-
                 else:
                     # swap
                     temp = target_item
@@ -196,34 +165,58 @@ class Inventory:
             self._dragged_item = None
             self._drag_origin = None
 
-
-        # Drag follows mouse while holding
+        # Drag follows mouse
         if self._dragged_item:
             self._dragged_item.set_position(mouse_pos)
 
+        # RIGHT CLICK to use equipped item
+        if pygame.mouse.get_pressed()[2] and self._equipped_item:
+            self.use_item(self._equipped_item)
 
+    # ---------- ITEM USAGE ----------
+    def use_item(self, item):
+        """Gebruik consumables of items op de speler"""
+        item_id = item.get_id()
+
+        if item_id == "energy_drink":
+            self._player.restore_stamina(40)
+            item.remove_from_stack(1)
+
+        elif item_id == "bandage":
+            self._player.heal(30)
+            item.remove_from_stack(1)
+
+        elif item_id == "iodine":
+            # voorbeeld: geen effect maar verbruikbaar
+            item.remove_from_stack(1)
+
+        if item.get_amount() <= 0:
+            self.remove_item(item)
+
+    def remove_item(self, item):
+        """Verwijder item uit alle slots"""
+        for slot in self._slots + self._hotbar:
+            if slot.get_item() == item:
+                slot.clear_item()
+                if self._equipped_item == item:
+                    self._equipped_item = None
+                break
+
+    # ---------- DRAW ----------
     def draw(self, screen):
-        # ---------- INVENTORY (only when open) ----------
+        # Inventory background + slots
         if self._open:
-            # draw inventory background
             screen.blit(self._inventory_bg, self._inventory_bg_rect)
-
-            # draw inventory slots
             for slot in self._slots:
                 slot.draw(screen)
 
-        # ---------- HOTBAR (always visible) ----------
+        # Hotbar always visible
         screen.blit(self._hotbar_bg, self._hotbar_bg_rect)
-
         for slot in self._hotbar:
             slot.draw(screen)
 
-        # ---------- DRAGGED ITEM (top layer) ----------
+        # Dragged item on top layer
         if self._dragged_item:
-            surf = self._dragged_item.get_weapon_surface()
-            if surf is None:
-                surf = self._dragged_item.get_icon()
-
+            surf = self._dragged_item.get_weapon_surface() or self._dragged_item.get_icon()
             rect = surf.get_rect(center=pygame.mouse.get_pos())
             screen.blit(surf, rect)
-

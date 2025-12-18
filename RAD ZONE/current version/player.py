@@ -2,182 +2,155 @@ import pygame
 from weapon import Weapon
 from animation import Animator
 
-
 class Player:
     def __init__(self, surf, rect, sound):
-
-
-
         self._surf = surf
         self._rect = rect
-        
         self._pos = pygame.Vector2(self._rect.center)
 
         self.sound = sound
         self.animator = Animator("RAD ZONE/current version/Graphics/player")
 
-        self._was_mouse_pressed = False  # tracks mouse state for single-shot
-        self._f_was_pressed = False  # tracks F key state for single-shot stab
-        self.available_weapons = [
-            "knife",
-            "pistol",
-            "rifle",
-            "revolver",
-            "shotgun"
-        ]
+        # ---------- INPUT TRACKING ----------
+        self._was_mouse_pressed = False
+        self._f_was_pressed = False
 
+        # ---------- WEAPONS ----------
+        self.available_weapons = ["knife", "pistol", "rifle", "revolver", "shotgun"]
         self.current_weapon_index = 0
-        self.weapon = Weapon(
-            self.available_weapons[self.current_weapon_index],
-            self.sound
-        )
-
+        self.weapon = Weapon(self.available_weapons[self.current_weapon_index], self.sound)
         self.weapon.equip()
 
-        self._max_stamina = 100
-        self._stamina = self._max_stamina
-
-        self._drain = 40
-        self._regen = 15
-
-        self._exhaust_at = 0
-        self._recover_at = 20
-        self._exhausted = False
-        
-        # Health system
+        # ---------- HEALTH ----------
         self._max_health = 100
         self._health = self._max_health
 
-        self._base_speed = 400
-        self._sprint_speed = 600
-        self._speed = self._base_speed
+        # ---------- MOVEMENT ----------
+        self._walk_speed = 400
+        self._run_speed = 600
+        self._speed = self._walk_speed
 
-    # -------- GETTERS --------
-    def get_rect(self):
-        return self._rect
+        # ---------- STAMINA ----------
+        self._max_stamina = 100
+        self._stamina = self._max_stamina
+        self._display_stamina = self._stamina / self._max_stamina  # ratio 0-1
 
-    def get_surface(self):
-        return self._surf
+        self._stamina_drain = 40
+        self._stamina_regen = 15
+        self._regen_delay = 1.0
+        self._exhaust_at = 0
+        self._recover_at = 20
+        self._exhausted = False
+        self._last_run_time = 0
 
-    def get_speed(self):
-        return self._speed
+        # ---------- KNIFE STATE ----------
+        self.last_f_press_time = -1
+        self.last_stabbed_zombies = set()
 
-    def get_stamina(self):
-        return self._stamina
+    # ------------------- GETTERS -------------------
+    def get_rect(self): return self._rect
+    def get_surface(self): return self._surf
+    def get_speed(self): return self._speed
+    def get_health(self): return self._health
+    def get_max_health(self): return self._max_health
+    def is_exhausted(self): return self._exhausted
 
-    def is_exhausted(self):
-        return self._exhausted
-    
-    def get_health(self):
-        return self._health
-    
-    def get_max_health(self):
-        return self._max_health
-    
+    def get_stamina_display(self):
+        """Return smooth stamina value for UI (0-1)"""
+        return self._display_stamina
+
+    # ------------------- HEALTH -------------------
     def take_damage(self, damage):
-        self._health -= damage
-        self._health = max(0, self._health)
+        self._health = max(0, self._health - damage)
 
-    # -------- LOGIC --------
-    def update(self, keys, dt, current_time):
-        # ---- movement / stamina ----
-        moving = keys[pygame.K_z] or keys[pygame.K_q] or keys[pygame.K_s] or keys[pygame.K_d]
-        sprinting = keys[pygame.K_LSHIFT] and moving
+    # ------------------- STAMINA -------------------
+    def restore_stamina(self, amount):
+        self._stamina = min(self._stamina + amount, self._max_stamina)
 
-        dx = keys[pygame.K_d] - keys[pygame.K_q]
-        dy = keys[pygame.K_s] - keys[pygame.K_z]
-        velocity = pygame.Vector2(dx, dy)
-
-        # Normalize diagonal movement
-        if velocity.length() > 0:
-            velocity = velocity.normalize()
-
-        # Move player
-        # Move in WORLD space
-        self._pos += velocity * self._speed * dt
-        self._rect.center = self._pos
-
-
-        # Update animation
-        self.animator.update(velocity, dt, current_time)
-
-
-
-
+    def _update_stamina(self, running, dt, current_time):
         if self._stamina <= self._exhaust_at:
             self._exhausted = True
         elif self._stamina >= self._recover_at:
             self._exhausted = False
 
-        if sprinting and not self._exhausted:
-            self._stamina -= self._drain * dt
-            self._speed = self._sprint_speed
+        if running:
+            self._speed = self._run_speed
+            self._stamina -= self._stamina_drain * dt
+            self._last_run_time = current_time
         else:
-            self._stamina += self._regen * dt
-            self._speed = self._base_speed
+            self._speed = self._walk_speed
+            if current_time - self._last_run_time >= self._regen_delay:
+                self._stamina += self._stamina_regen * dt
 
         self._stamina = max(0, min(self._stamina, self._max_stamina))
 
-        # ---- MOUSE SHOOTING ----
-        mouse_buttons = pygame.mouse.get_pressed()
-        mouse_pressed = mouse_buttons[0]  # Left click
+        # Smooth display as ratio 0-1
+        target_ratio = self._stamina / self._max_stamina
+        lerp_speed = 8
+        self._display_stamina += (target_ratio - self._display_stamina) * min(lerp_speed * dt, 1)
 
-        # Single-shot for all weapons, full-auto for rifle
+    # ------------------- UPDATE -------------------
+    def update(self, keys, dt, current_time):
+        dx = keys[pygame.K_d] - keys[pygame.K_q]
+        dy = keys[pygame.K_s] - keys[pygame.K_z]
+        velocity = pygame.Vector2(dx, dy)
+
+        moving = velocity.length_squared() > 0
+        running = keys[pygame.K_LSHIFT] and moving and not self._exhausted
+        if moving:
+            velocity = velocity.normalize()
+
+        # ---------- STAMINA UPDATE ----------
+        self._update_stamina(running, dt, current_time)
+
+        # ---------- MOVEMENT ----------
+        self._pos += velocity * self._speed * dt
+        self._rect.center = self._pos
+
+        # ---------- ANIMATION ----------
+        self.animator.update(velocity, dt, current_time)
+
+        # ---------- SHOOTING ----------
+        mouse_pressed = pygame.mouse.get_pressed()[0]
         if mouse_pressed:
             if self.weapon.full_auto or not self._was_mouse_pressed:
-                self.shoot_weapon(current_time)
-
+                self.weapon.shoot(current_time)
         self._was_mouse_pressed = mouse_pressed
 
-        # ---- Reload with R ----
+        # ---------- RELOAD ----------
         if keys[pygame.K_r]:
-            self.reload_weapon()
+            self.weapon.reload()
 
-        # ---- STAB with F ----
+        # ---------- KNIFE ANIMATION ----------
         f_pressed = keys[pygame.K_f]
         if f_pressed and not self._f_was_pressed:
             self.animator.play_stab(current_time, duration=0.4)
+            self.last_f_press_time = current_time
+            self.last_stabbed_zombies = set()
         self._f_was_pressed = f_pressed
 
-
-
-
-
+    # ------------------- DRAW -------------------
     def draw(self, screen):
         image = self.animator.get_image()
         rect = image.get_rect(center=screen.get_rect().center)
         screen.blit(image, rect)
 
-
+    # ------------------- WEAPON SWITCHING -------------------
     def next_weapon(self):
-        if not self.available_weapons:
-            return
-        self.current_weapon_index += 1
-        if self.current_weapon_index >= len(self.available_weapons):
-            self.current_weapon_index = 0
-        self.weapon = Weapon(
-            self.available_weapons[self.current_weapon_index],
-            self.sound
-        )
+        if not self.available_weapons: return
+        self.current_weapon_index = (self.current_weapon_index + 1) % len(self.available_weapons)
+        self.weapon = Weapon(self.available_weapons[self.current_weapon_index], self.sound)
         self.weapon.equip()
-
+        self.reset_stab_state()
 
     def previous_weapon(self):
-        if not self.available_weapons:
-            return
-        self.current_weapon_index -= 1
-        if self.current_weapon_index < 0:
-            self.current_weapon_index = len(self.available_weapons) - 1
-        self.weapon = Weapon(
-            self.available_weapons[self.current_weapon_index],
-            self.sound
-        )
+        if not self.available_weapons: return
+        self.current_weapon_index = (self.current_weapon_index - 1) % len(self.available_weapons)
+        self.weapon = Weapon(self.available_weapons[self.current_weapon_index], self.sound)
         self.weapon.equip()
+        self.reset_stab_state()
 
-
-    def shoot_weapon(self, current_time):
-        self.weapon.shoot(current_time)
-
-    def reload_weapon(self):
-        self.weapon.reload()
-    
+    def reset_stab_state(self):
+        self.last_f_press_time = -1
+        self.last_stabbed_zombies = set()
+        self._f_was_pressed = False
