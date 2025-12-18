@@ -16,6 +16,8 @@ from scoreboard import Scoreboard
 
 def load_building(path, size, x, y):
     surf = ImageLoader.load(path, size=size)[0]
+    rect = surf.get_rect()
+    rect.midbottom = (x, y)
     return surf, pygame.Vector2(x, y)
 
 def load_char_weapon(path):
@@ -54,7 +56,7 @@ class Game:
 
         # LOAD ASSETS
         self.map_surf, _ = ImageLoader.load(
-            "RAD ZONE/current version/Graphics/Game_building_test.png",
+            "RAD ZONE/current version/Graphics/Final map game.png",
             size=(7680, 6400)
         )
         self.char_surf, self.char_rect = ImageLoader.load(
@@ -79,7 +81,7 @@ class Game:
         )
 
         self.buildings = [
-            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 1722, 1068)
+            load_building("RAD ZONE/current version/Graphics/building 7 V2.png", (400, 768), 763.82, 515)
         ]
 
         # INVENTORY
