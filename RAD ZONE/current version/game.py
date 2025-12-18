@@ -301,7 +301,14 @@ class Game:
                 else:
                     obj.draw(self._screen, self._camera)
             
-            self._ui.draw(self._screen, self._player.get_health(), self._player.get_max_health())
+            self._ui.draw(
+                self._screen,
+                self._player.get_health(),
+                self._player.get_max_health(),
+                self._player.get_stamina(),
+                100
+            )
+
 
             player_world_pos = pygame.Vector2(self._player.get_rect().center)
             self._minimap.draw(self._screen, player_world_pos)
