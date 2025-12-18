@@ -215,8 +215,10 @@ class Game:
                 if self._world:
                     self._world.draw(self._screen, self._camera)
                 equipped_item = self._inventory.get_equipped_item()
-                if equipped_item:
-                    self._player.set_equipped_item(equipped_item.key)  # pass the item key as weapon name
+                if equipped_item is not None:
+                    self._player.set_equipped_item(equipped_item)
+
+
 
 
             drawables = [("player", self._player, player_pos.y)]
@@ -240,6 +242,12 @@ class Game:
             if self._inventory:
                 self._inventory.draw(self._screen)
                 self._inventory.update(mouse_pos, mouse_down, mouse_up)
+
+            # equipped_item = self._inventory.get_equipped_item()
+            # if equipped_item:
+            #     self._player.set_equipped_item(equipped_item.get_id())  # get_id() returns item_id
+
+
 
             pygame.display.flip()
 

@@ -103,11 +103,18 @@ class Inventory:
 
     def select_next(self):
         self._selected_hotbar = (self._selected_hotbar + 1) % len(self._hotbar)
-        self._equipped_item = self._hotbar[self._selected_hotbar].get_item()
+        weapon_item = self._hotbar[self._selected_hotbar].get_item()
+        self._player.set_equipped_item(weapon_item)
+        self._equipped_item = weapon_item  # keep your Inventory in sync
 
     def select_previous(self):
         self._selected_hotbar = (self._selected_hotbar - 1) % len(self._hotbar)
-        self._equipped_item = self._hotbar[self._selected_hotbar].get_item()
+        weapon_item = self._hotbar[self._selected_hotbar].get_item()
+        self._player.set_equipped_item(weapon_item)
+        self._equipped_item = weapon_item
+
+
+
 
 
     # ---------- UPDATE ----------

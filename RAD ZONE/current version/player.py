@@ -66,15 +66,32 @@ class Player:
     def is_exhausted(self):
         return self._exhausted
     
+    # def set_equipped_item(self, item):
+    #     if not item:
+    #         return
+    #     self._equipped_item = item  # store full inventory item object
+    #     self.weapon = Weapon(item.name, self.sound)
+    #     self.weapon.equip()
+
     def set_equipped_item(self, item):
-        self._equipped_item = item
-        if item and hasattr(item, "name"):  # this might fail because inventory items don't have "name"
-            weapon_name = getattr(item, "name", None)
-            if not weapon_name and hasattr(item, "weapon_surf"):  # fallback: use item key as weapon name
-                weapon_name = item.key  # assuming your item object has 'key' (like "pistol")
-            if weapon_name:
-                self.weapon = Weapon(weapon_name, self.sound)
-                self.weapon.equip()
+        self._equipped_item = item  # always store the item
+
+        # Only create a Weapon instance if the item is a weapon
+        weapon_ids = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow"]
+        if item is not None and item.get_id() in weapon_ids:
+            self.weapon = Weapon(item.get_id(), self.sound)
+            self.weapon.equip()
+        else:
+            # For consumables or None, fallback to knife or leave weapon unchanged
+            self.weapon = Weapon("knife", self.sound) if item is None else self.weapon
+
+
+
+
+
+
+
+
     
     def get_health(self):
         return self._health
@@ -155,18 +172,26 @@ class Player:
 
         # ---------- ATTACK ANIMATION----------
         mouse_pressed = pygame.mouse.get_pressed()[0]
-        if mouse_pressed:
-            if self.weapon.name == "knife":
-                # knife slash animation & damage
-                if pygame.time.get_ticks() / 1000 - self._attack_last_time > 0.5:
+
+        weapon_type = self._equipped_item.get_id() if self._equipped_item else "knife"
+
+
+        if weapon_type == "knife":
+            if mouse_pressed and not self._was_mouse_pressed:
+                if current_time - self._attack_last_time > 0.5:
                     self.animator.play_stab(current_time, duration=0.4)
                     self._attack_last_time = current_time
                     self._attack_targets_hit = set()
-            else:
-                # guns
-                if self.weapon.full_auto or not self._was_mouse_pressed:
-                    self.weapon.shoot(current_time)
+        else:
+            # gun
+            if mouse_pressed and (self.weapon.full_auto or not self._was_mouse_pressed):
+                if self.weapon.shoot(current_time):
+                    # optional: play shooting animation here
+                    pass
+
         self._was_mouse_pressed = mouse_pressed
+
+
 
 
     # ------------------- DRAW -------------------
