@@ -4,8 +4,9 @@ class World:
         self._buildings = buildings
 
     def draw(self, screen, camera):
-        cam = camera.get_position()
-        screen.blit(self._map, (-cam.x, -cam.y))
+        screen.blit(self._map, -camera.get_position())
 
         for surf, pos in self._buildings:
-            screen.blit(surf, pos - cam)
+            rect = surf.get_rect(topleft=pos)
+            screen.blit(surf, camera.apply(rect))
+

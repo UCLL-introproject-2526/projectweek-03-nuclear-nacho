@@ -5,8 +5,14 @@ from animation import Animator
 
 class Player:
     def __init__(self, surf, rect, sound):
+
+
+
         self._surf = surf
         self._rect = rect
+        
+        self._pos = pygame.Vector2(self._rect.center)
+
         self.sound = sound
         self.animator = Animator("RAD ZONE/current version/Graphics/player")
 
@@ -72,8 +78,10 @@ class Player:
             velocity = velocity.normalize()
 
         # Move player
-        self._rect.centerx += velocity.x * self._speed * dt
-        self._rect.centery += velocity.y * self._speed * dt
+        # Move in WORLD space
+        self._pos += velocity * self._speed * dt
+        self._rect.center = self._pos
+
 
         # Update animation
         self.animator.update(velocity, dt)
@@ -116,7 +124,7 @@ class Player:
 
     def draw(self, screen):
         image = self.animator.get_image()
-        rect = image.get_rect(center=self._rect.center)
+        rect = image.get_rect(center=screen.get_rect().center)
         screen.blit(image, rect)
 
 

@@ -3,10 +3,9 @@ from slot import Slot
 from item import Item
 
 class Inventory:
-    def __init__(self, socket_surf, item_data, screen_size):
-        
-        self._drop_success = False
-        self._mouse_down_prev = False
+    def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg):
+
+        w, h = screen_size
 
         self._open = False
         self._slots = []
@@ -17,8 +16,7 @@ class Inventory:
         self._equipped_item = None
         self._mouse_down_prev = False
 
-        w, h = screen_size
-
+        # ---------- UI SCALE ----------
         self._ui_scale = 1.35
         base_size, base_gap = 64, 10
 
@@ -30,16 +28,61 @@ class Inventory:
             (size, size)
         )
 
-        # --- Inventory grid (4x4) ---
+        # ---------- INVENTORY GRID ----------
         cols, rows = 4, 4
-
         inv_width = cols * size + (cols - 1) * gap
         inv_height = rows * size + (rows - 1) * gap
 
         start_x = (w - inv_width) // 2 + size // 2
         start_y = (h - inv_height) // 2 + size // 2
 
+        # ---------- HOTBAR ----------
+        hotbar_slots = 5
+        hotbar_width = hotbar_slots * size + (hotbar_slots - 1) * gap
+        hotbar_y = h - int(100 * self._ui_scale)
+        hotbar_start_x = (w - hotbar_width) // 2 + size // 2
 
+        # ---------- BACKGROUNDS ----------
+        bg_padding_x = int(size * 1.6)
+        bg_padding_y = int(size * 1.6)
+
+        self._inventory_bg = pygame.transform.scale(
+            inventory_bg,
+            (
+                inv_width + bg_padding_x,
+                inv_height + bg_padding_y
+            )
+        )
+
+
+        hotbar_padding_x = int(size * 0.4)
+        hotbar_padding_y = int(size * 0.3)
+
+        self._hotbar_bg = pygame.transform.scale(
+            hotbar_bg,
+            (
+                hotbar_width + hotbar_padding_x,
+                size + hotbar_padding_y
+            )
+        )
+
+
+        offset_x = int(size * 0.3)   # right
+        offset_y = int(size * 0.67)   # down
+
+        self._inventory_bg_rect = self._inventory_bg.get_rect(
+            center=(
+                w // 2 + offset_x,
+                h // 2 + offset_y
+            )
+        )
+
+
+        self._hotbar_bg_rect = self._hotbar_bg.get_rect(
+            center=(w // 2, hotbar_y)
+        )
+
+        # ---------- CREATE INVENTORY SLOTS ----------
         for row in range(rows):
             for col in range(cols):
                 pos = (
@@ -48,12 +91,7 @@ class Inventory:
                 )
                 self._slots.append(Slot(self._socket_surf, pos))
 
-        # --- Hotbar (5 slots) ---
-        hotbar_slots = 5
-        hotbar_width = hotbar_slots * size + (hotbar_slots - 1) * gap
-        hotbar_y = h - int(100 * self._ui_scale)
-        hotbar_start_x = (w - hotbar_width) // 2 + size // 2
-
+        # ---------- CREATE HOTBAR SLOTS ----------
         for i in range(hotbar_slots):
             pos = (
                 hotbar_start_x + i * (size + gap),
@@ -61,10 +99,8 @@ class Inventory:
             )
             self._hotbar.append(Slot(self._socket_surf, pos))
 
-        # --- Spawn test weapons ---
-        # --- Spawn ALL weapons into inventory ---
+        # ---------- SPAWN ITEMS ----------
         slot_index = 0
-
         for item_id, data in item_data.items():
             if slot_index >= len(self._slots):
                 break
@@ -80,6 +116,7 @@ class Inventory:
 
             self._slots[slot_index].set_item(item)
             slot_index += 1
+
 
 
     # ---------- GETTERS ----------
@@ -160,13 +197,22 @@ class Inventory:
 
 
     def draw(self, screen):
+        # ---------- INVENTORY (only when open) ----------
         if self._open:
+            # draw inventory background
+            screen.blit(self._inventory_bg, self._inventory_bg_rect)
+
+            # draw inventory slots
             for slot in self._slots:
                 slot.draw(screen)
+
+        # ---------- HOTBAR (always visible) ----------
+        screen.blit(self._hotbar_bg, self._hotbar_bg_rect)
 
         for slot in self._hotbar:
             slot.draw(screen)
 
+        # ---------- DRAGGED ITEM (top layer) ----------
         if self._dragged_item:
             surf = self._dragged_item.get_weapon_surface()
             if surf is None:
@@ -174,3 +220,4 @@ class Inventory:
 
             rect = surf.get_rect(center=pygame.mouse.get_pos())
             screen.blit(surf, rect)
+
