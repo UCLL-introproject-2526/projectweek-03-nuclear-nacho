@@ -96,7 +96,7 @@ class Game:
                 "icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
                 "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png")
             },
-            "machine_gun": {
+            "rifle": {
                 "icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
                 "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png")
             },
@@ -227,8 +227,8 @@ class Game:
 
             pygame.display.flip()
 
-    def load_icon(path):
-        return ImageLoader.load(path, size=(48, 48))[0]
+    # def load_icon(path):
+    #     return ImageLoader.load(path, size=(48, 48))[0]
 
-    def load_weapon(path):
-        return ImageLoader.load(path, size=(96, 96))[0]
+    # def load_weapon(path):
+    #     return ImageLoader.load(path, size=(96, 96))[0]
