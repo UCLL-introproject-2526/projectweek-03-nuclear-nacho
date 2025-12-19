@@ -147,7 +147,7 @@ class Inventory:
         for slot in slots:
             slot.update(mouse_pos)
 
-        # PICK UP
+        # PICK UP ITEM
         if press and not self._dragged_item:
             for slot in slots:
                 if slot.is_hovered() and slot.get_item():
@@ -156,63 +156,21 @@ class Inventory:
                     slot.clear_item()
                     break
 
-        # DROP
+        # DROP ITEM
         if release and self._dragged_item:
-            target = None
+            target_slot = None
             for slot in slots:
                 if slot.is_hovered():
-                    target = slot
+                    target_slot = slot
                     break
 
-            if target is None:
+            if target_slot is None:
+                # Drop back to origin
                 self._drag_origin.set_item(self._dragged_item)
             else:
-                target_item = target.get_item()
+                target_item = target_slot.get_item()
                 if target_item is None:
-                    target.set_item(self._dragged_item)
-                elif target_item.can_stack_with(self._dragged_item):
-                    added = target_item.add_to_stack(self._dragged_item.get_amount())
-                    if added < self._dragged_item.get_amount():
-                        self._dragged_item.remove_from_stack(added)
-                        self._drag_origin.set_item(self._dragged_item)
-                else:
-                    # swap
-                    temp = target_item
-                    target.set_item(self._dragged_item)
-                    self._drag_origin.set_item(temp)
-
-            self._dragged_item = None
-            self._drag_origin = None
-
-        # Drag follows mouse
-        if self._dragged_item:
-            self._dragged_item.set_position(mouse_pos)
-
-        # RIGHT CLICK to use equipped item
-        if pygame.mouse.get_pressed()[2] and self._equipped_item:
-            self.use_item(self._equipped_item)
-
-        if release and self._dragged_item:
-            target = None
-            for slot in slots:
-                if slot.is_hovered():
-                    target = slot
-                    break
-
-            if target is None:
-                # Drop back to original slot
-                self._drag_origin.set_item(self._dragged_item)
-            else:
-                target_item = target.get_item()
-                if target_item is None:
-                    target.set_item(self._dragged_item)
-                    if target in self._hotbar:
-                        # Only play sound if the dropped item is different from currently equipped item
-                        if target in self._hotbar:
-                            slot_index = self._hotbar.index(target)
-                            if slot_index == self._selected_hotbar and self._dragged_item != self._equipped_item:
-                                self._player.play_equip_sound(self._dragged_item)
-
+                    target_slot.set_item(self._dragged_item)
                 elif target_item.can_stack_with(self._dragged_item):
                     added = target_item.add_to_stack(self._dragged_item.get_amount())
                     if added < self._dragged_item.get_amount():
@@ -221,18 +179,23 @@ class Inventory:
                 else:
                     # Swap items
                     temp = target_item
-                    target.set_item(self._dragged_item)
+                    target_slot.set_item(self._dragged_item)
                     self._drag_origin.set_item(temp)
-                    if target in self._hotbar:
-                        # Only play sound if the dropped item is different from currently equipped item
-                        if target in self._hotbar:
-                            slot_index = self._hotbar.index(target)
-                            if slot_index == self._selected_hotbar and self._dragged_item != self._equipped_item:
-                                self._player.play_equip_sound(self._dragged_item)
 
+            # ✅ Play sound if dropped into hotbar
+            if target_slot in self._hotbar:
+                # Only play sound if the dropped item is different from currently equipped item
+                slot_index = self._hotbar.index(target_slot)
+                if slot_index == self._selected_hotbar:
+                    self._player.play_equip_sound(target_slot.get_item())
 
+            # Reset drag
             self._dragged_item = None
             self._drag_origin = None
+
+        # DRAGGED ITEM FOLLOWS MOUSE
+        if self._dragged_item:
+            self._dragged_item.set_position(mouse_pos)
 
 
     # ---------- ITEM USAGE ----------
