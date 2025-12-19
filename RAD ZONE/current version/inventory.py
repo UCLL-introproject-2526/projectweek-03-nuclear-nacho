@@ -110,7 +110,8 @@ class Inventory:
 
         # Update equipped item and player
         self._equipped_item = new_item
-        self._player.set_equipped_item(new_item)
+        self._player.set_equipped_item(new_item, play_sound=True)
+
 
 
 
@@ -124,7 +125,8 @@ class Inventory:
 
         # Update equipped item and player
         self._equipped_item = new_item
-        self._player.set_equipped_item(new_item)
+        self._player.set_equipped_item(new_item, play_sound=True)
+
 
 
 
@@ -185,10 +187,11 @@ class Inventory:
 
             # ✅ Play sound if dropped into hotbar
             if target_slot in self._hotbar:
-                # Only play sound if the dropped item is different from currently equipped item
                 slot_index = self._hotbar.index(target_slot)
                 if slot_index == self._selected_hotbar:
-                    self._player.play_equip_sound(target_slot.get_item())
+                    self._equipped_item = target_slot.get_item()
+                    self._player.set_equipped_item(self._equipped_item, play_sound=True)
+
 
             # Reset drag
             self._dragged_item = None

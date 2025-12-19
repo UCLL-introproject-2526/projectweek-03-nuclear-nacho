@@ -82,10 +82,13 @@ class Player:
 
         if item is not None and item.get_id() in weapon_ids:
             self.weapon = Weapon(item.get_id(), self.sound)
-            # if play_sound:
-            #     self.weapon.equip()  # only plays if play_sound=True
+            if play_sound:
+                self.play_equip_sound(item)  # 🔊 trigger equip sound here
         else:
             self.weapon = Weapon("knife", self.sound) if item is None else self.weapon
+            if play_sound and item is not None:
+                self.play_equip_sound(item)
+
 
 
     def play_equip_sound(self, item):
@@ -263,18 +266,36 @@ class Player:
 
 
     def next_weapon(self):
-        if not self.available_weapons: return
+        if not self.available_weapons:
+            return
+
+        # Move to next weapon
         self.current_weapon_index = (self.current_weapon_index + 1) % len(self.available_weapons)
-        self.weapon = Weapon(self.available_weapons[self.current_weapon_index], self.sound)
-        self.weapon.equip()
+
+        # Create a simple Item object for the weapon (icon/graphics optional)
+        weapon_id = self.available_weapons[self.current_weapon_index]
+        self._equipped_item = Item(weapon_id, None)  # You can provide icon if needed
+
+        # Equip the weapon and play sound
+        self.set_equipped_item(self._equipped_item, play_sound=True)
+
+        # Reset melee state if needed
         self.reset_stab_state()
 
+
     def previous_weapon(self):
-        if not self.available_weapons: return
+        if not self.available_weapons:
+            return
+
+        # Move to previous weapon
         self.current_weapon_index = (self.current_weapon_index - 1) % len(self.available_weapons)
-        self.weapon = Weapon(self.available_weapons[self.current_weapon_index], self.sound)
-        self.weapon.equip()
+
+        weapon_id = self.available_weapons[self.current_weapon_index]
+        self._equipped_item = Item(weapon_id, None)
+
+        self.set_equipped_item(self._equipped_item, play_sound=True)
         self.reset_stab_state()
+
 
 
     def shoot_weapon(self, current_time):
