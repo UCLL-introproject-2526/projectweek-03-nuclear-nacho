@@ -35,6 +35,9 @@ class Game:
 
 
         self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        # Set system cursor to crosshair
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_CROSSHAIR)
+
         self._clock = pygame.time.Clock()
 
         # SOUND & MENU
