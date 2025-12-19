@@ -13,12 +13,13 @@ from hoofdscherm import Menu
 from Zombie import ZombieSpawner
 from scoreboard import Scoreboard
 from pause_menu import PauseMenu
+from death_screen import DeathScreen
+from commit_score import CommitScoreScreen
+
 
 
 def load_building(path, size, x, y):
     surf = ImageLoader.load(path, size=size)[0]
-    rect = surf.get_rect()
-    rect.midbottom = (x, y)
     return surf, pygame.Vector2(x, y)
 
 
@@ -33,16 +34,18 @@ class Game:
 
         self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self._clock = pygame.time.Clock()
-        pygame.key.set_repeat(0)
 
-        # GELUID & HOOFDMENU
+        # SOUND & MENU
         self.sound = SoundManager()
-        self._menu = Menu(self._screen, ["Play", "Scoreboard", "Settings", "Credits", "Quit"])
+        self._menu = Menu(
+            self._screen,
+            ["Play", "Scoreboard", "Settings", "Credits", "Quit"]
+        )
 
-        # --------------- GAME STATE ---------------
+        # GAME STATE
         self.state = "MENU"
 
-        # OBJECTEN ---------- starten als NONE
+        # OBJECTS
         self._player = None
         self._world = None
         self._camera = None
@@ -53,73 +56,82 @@ class Game:
 
         w, h = self._screen.get_size()
 
-        # LOAD ASSETS
+        # ASSETS
         self.map_surf, _ = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Final map game.png",
             size=(7680, 6400)
         )
+
         self.char_surf, self.char_rect = ImageLoader.load(
             "RAD ZONE/current version/Graphics/AChar.png",
             size=(150, 150),
             center=(w // 2, h // 2)
         )
+
         self.health = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Health-bar.png",
             size=(512, 35),
             center=(260, 30)
         )
+
         self.stamina = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Stamina-bar.png",
             size=(512, 35),
             center=(260, 70)
         )
+
         self.outline = ImageLoader.load(
             "RAD ZONE/current version/Graphics/Border-bar.png",
             size=(512, 35)
         )
+
         self.buildings = [
-            load_building("RAD ZONE/current version/Graphics/building 7 V2.png", (400, 768), 763.82, 515)
+            load_building( "RAD ZONE/current version/Graphics/building 7 V2.png", (400, 768), 763, 515),
+            load_building("RAD ZONE/current version/Graphics/building 7 V3.png", (400, 768), 1150, 515),
+            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 1527, 513),
+            load_building("RAD ZONE/current version/Graphics/Building2 v3.png", (644, 704), 1920, 514),
+            load_building("RAD ZONE/current version/Graphics/Building3.png", (408, 652), 2558, 573),
+            load_building("RAD ZONE/current version/Graphics/Building6.png", (1432, 844), 3210, 438),
+            load_building("RAD ZONE/current version/Graphics/van1.png", (256, 128), 3074, 1176),
+            load_building("RAD ZONE/current version/Graphics/Building5.png", (972, 584), 5312, 620),
+            load_building("RAD ZONE/current version/Graphics/Building1.png", (392, 648), 6520, 564),
+            load_building("RAD ZONE/current version/Graphics/Building2.png", (644, 704), 1224, 1660),
+            load_building("RAD ZONE/current version/Graphics/Building1.png", (392, 648), 2570, 1728),
+            load_building("RAD ZONE/current version/Graphics/Building1.png", (392, 648), 2962, 1728),
+            load_building("RAD ZONE/current version/Graphics/kerk.png", (716, 1292), 3451, 1452),
+            load_building("RAD ZONE/current version/Graphics/building 7 V3.png", (400, 768), 4676, 1616),
+            load_building("RAD ZONE/current version/Graphics/beenhouwer.png", (408, 652), 6062, 1674),
+            load_building("RAD ZONE/current version/Graphics/pizzavan2.png", (256, 128), 5794, 2182),
+            load_building("RAD ZONE/current version/Graphics/pizzavan2.png", (256, 128), 5794, 2065), 
+            load_building("RAD ZONE/current version/Graphics/Building2_v3_flip.png", (644, 704), 1844, 1660),
+            load_building("RAD ZONE/current version/Graphics/Building2_v2_flip.png", (644, 704), 5064, 1616),
+            load_building("RAD ZONE/current version/Graphics/dead tree.png", (400, 400), 4084, 1790),
+            load_building("RAD ZONE/current version/Graphics/autumn tree.png", (400, 400), 4246, 1830),
+            load_building("RAD ZONE/current version/Graphics/Fontein.png", (600, 600), 3514, 2756),
+            load_building("RAD ZONE/current version/Graphics/Building7_flip.png", (400, 768), 4740, 2694),
+            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 5136, 2692)
         ]
 
-        # INVENTORY
-        self._inventory = None
+        # Inventory key state
         self._inventory_key_down = False
 
-
-    # ---------------- HELPERS ----------------
+    # ---------------- INVENTORY CREATION ----------------
     def _create_inventory(self, screen_size):
-        def load_icon(path): return ImageLoader.load(path, size=(48, 48))[0]
-        def load_weapon(path): return ImageLoader.load(path, size=(96, 96))[0]
+        def load_icon(path): 
+            return ImageLoader.load(path, size=(48, 48))[0]
 
+        def load_weapon(path): 
+            return ImageLoader.load(path, size=(96, 96))[0]
+
+        # Example items
         item_data = {
             "pistol": {"icon": load_icon("RAD ZONE/current version/Graphics/pistool.png"),
                        "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/pistool.png"),
                        "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_pistool.png")},
-            "shotgun": {"icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
-                        "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png"),
-                        "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_shotgun.png")},
-            "rifle": {"icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
-                      "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png"),
-                      "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_machine_gun.png")},
-            "revolver": {"icon": load_icon("RAD ZONE/current version/Graphics/revolver.png"),
-                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/revolver.png"),
-                         "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_revolver.png")},
-            "crossbow": {"icon": load_icon("RAD ZONE/current version/Graphics/crossbow.png"),
-                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/crossbow.png"),
-                         "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_crossbow.png")},
             "knife": {"icon": load_icon("RAD ZONE/current version/Graphics/knife.png"),
                       "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png")}
+            # Voeg andere items toe zoals shotgun, rifle etc.
         }
-
-        iodine_icon = load_icon("RAD ZONE/current version/Graphics/Iodine pills.png")
-        iodine_icon = pygame.transform.scale(iodine_icon, (iodine_icon.get_width() * 2, iodine_icon.get_height() * 2))
-        item_data.update({
-            "iodine": {"icon": iodine_icon, "weapon_surf": None, "stackable": True, "amount": 5, "max_stack": 20},
-            "bandage": {"icon": load_icon("RAD ZONE/current version/Graphics/bandage.png"),
-                        "weapon_surf": None, "stackable": True, "amount": 3, "max_stack": 10},
-            "energy_drink": {"icon": load_icon("RAD ZONE/current version/Graphics/Energy drink.png"),
-                             "weapon_surf": None, "stackable": True, "amount": 2, "max_stack": 5}
-        })
 
         socket_surf = ImageLoader.load("RAD ZONE/current version/Graphics/Inventory_box.png", size=(64, 64))[0]
         inventory_bg = ImageLoader.load("RAD ZONE/current version/Graphics/Inventory_background.png")[0]
@@ -131,7 +143,10 @@ class Game:
     def start_game(self):
         w, h = self._screen.get_size()
 
+<<<<<<< HEAD
         # Create player
+=======
+>>>>>>> 054a4a7f3b4518d4bea48e3c4f6d62024df01315
         self._player = Player(self.char_surf, self.char_rect, self.sound)
 
         # Create zombie spawner
@@ -165,9 +180,15 @@ class Game:
                 elif choice == "Play":
                     self.start_game()
                     self.state = "PLAYING"
+                elif choice == "Credits":
+                    from credits import CreditsScreen
+                    CreditsScreen(self._screen).run()
 
             elif self.state == "PLAYING":
                 self._game_loop()
+
+            elif self.state == "DEAD":
+                self._death_loop()
 
     # ---------------- GAMEPLAY LOOP ----------------
 # ---------------- GAMEPLAY LOOP ----------------
@@ -184,20 +205,20 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
+
                 if self._inventory and event.type == pygame.MOUSEWHEEL:
                     if event.y > 0:
                         self._inventory.select_next()
                     else:
                         self._inventory.select_previous()
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e and self._inventory and not self._inventory_key_down:
                         self._inventory.toggle()
                         self._inventory_key_down = True
                     if event.key == pygame.K_ESCAPE:
                         action = PauseMenu(self._screen).run(self._screen.copy())
-                        if action == "Resume":
-                            pass
-                        elif action == "Quit":
+                        if action == "Quit":
                             self.state = "MENU"
                             return
                 if event.type == pygame.KEYUP and event.key == pygame.K_e:
@@ -221,8 +242,9 @@ class Game:
             if self._zombie_spawner and self._player:
                 self._zombie_spawner.update(player_pos, dt, current_time)
 
-                # Knife and zombie attacks
+                # Handle melee/gun attacks
                 self._handle_attack(current_time, player_pos)
+                # Handle zombie attacks
                 self._handle_zombie_attacks(player_pos, dt)
 
             # ---------------- DRAWING ----------------
@@ -248,7 +270,7 @@ class Game:
                 else:
                     obj.draw(self._screen, self._camera)
 
-            if self._ui:
+            if self._ui and self._player:
                 self._ui.draw(
                     self._screen,
                     self._player.get_health(),
@@ -256,13 +278,17 @@ class Game:
                     self._player.get_stamina(),
                     100
                 )
-
             if self._minimap:
                 self._minimap.draw(self._screen, player_pos)
 
             if self._inventory:
                 self._inventory.draw(self._screen)
                 self._inventory.update(pygame.mouse.get_pos(), mouse_down, mouse_up)
+
+            # Death check
+            if self._player.get_health() <= 0:
+                self.state = "DEAD"
+                return
 
             pygame.display.flip()
 
@@ -273,7 +299,7 @@ class Game:
         if player._equipped_item and player._equipped_item.get_id() == "knife":
             if current_time - player._attack_last_time > 0.5:
                 for zombie in self._zombie_spawner.get_zombies():
-                    if zombie not in player._attack_targets_hit and not zombie.is_dead():
+                    if zombie not in player._attack_targets_hit and not zombie._is_dead:
                         if (zombie.get_position() - player_pos).length() < 100:
                             zombie.take_damage(50, zombie.get_position() - player_pos, current_time)
                             player._attack_targets_hit.add(zombie)
@@ -282,9 +308,48 @@ class Game:
 
 
 
-
-    # ---------------- ZOMBIE ATTACKS ----------------
+    # ---------------- ZOMBIE DAMAGE ----------------
     def _handle_zombie_attacks(self, player_pos, dt):
         for zombie in self._zombie_spawner.get_zombies():
             if zombie.is_attacking() and (zombie.get_position() - player_pos).length() < 80:
                 self._player.take_damage(zombie._damage_per_second * dt)
+
+    # ---------------- DEATH SCREEN ----------------
+        # ---------------- DEATH SCREEN ----------------
+    def _death_loop(self):
+        kills = self._zombie_spawner.get_kill_count()
+
+        # Maak een snapshot van het scherm
+        game_surface = self._screen.copy()
+
+        while True:
+            from commit_score import CommitScoreScreen
+            action = DeathScreen(self._screen, kills).run(game_surface)
+
+            if action == "Play":
+                self._reset_game()
+                self.start_game()
+                self.state = "PLAYING"
+                return
+            elif action == "CommitScore":
+                # Open CommitScoreScreen
+                name = CommitScoreScreen(self._screen, kills).run()
+                print(f"Score opgeslagen voor: {name}")
+                self._reset_game()
+                self.state = "MENU"
+                return
+            elif action == "Quit":
+                self._reset_game()
+                self.state = "MENU"
+                return
+
+
+    # ---------------- RESET GAME ----------------
+    def _reset_game(self):
+        self._player = None
+        self._world = None
+        self._camera = None
+        self._ui = None
+        self._inventory = None
+        self._zombie_spawner = None
+        self._minimap = None

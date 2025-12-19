@@ -1,13 +1,16 @@
 import pygame
 import sys
+import json
+import os
 
 
 class Scoreboard:
-    def __init__(self, screen):
+    def __init__(self, screen, score_file="scores.json"):
         self.screen = screen
         self.width, self.height = screen.get_size()
+        self.score_file = score_file
 
-        # Achtergrond (titel zit in de afbeelding)
+        # Achtergrond
         self.background = pygame.image.load(
             "RAD ZONE/UI/Menu/achtergrond_scoreboard.png"
         ).convert()
@@ -15,19 +18,9 @@ class Scoreboard:
 
         # Font
         pygame.font.init()
-        self.font = pygame.font.SysFont(None, 60)
+        self.font = pygame.font.Font("RAD ZONE/UI/Menu/edit-undo.brk.ttf", 60)
 
-        # Dummy scores (later JSON)
-        self.scores = [
-            ("Michiel", 1500),
-            ("Player2", 1200),
-            ("Player3", 900),
-            ("Player4", 500),
-        ]
-
-        # -----------------------------
-        #   RETURN KNOP + SCHALING
-        # -----------------------------
+        # Return knop afbeeldingen
         self.return_idle = pygame.image.load("RAD ZONE/UI/Menu/return_idle.png").convert_alpha()
         self.return_pressed = pygame.image.load("RAD ZONE/UI/Menu/return_pressed.png").convert_alpha()
 
@@ -49,6 +42,25 @@ class Scoreboard:
             "rect": self.return_idle.get_rect(center=(self.width // 2, self.height - 120)),
             "down": False
         }
+
+        # Laad scores
+        self.load_scores()
+
+    def load_scores(self):
+        if not os.path.exists(self.score_file):
+            self.scores = []
+            return
+
+        with open(self.score_file, "r") as f:
+            try:
+                self.scores = json.load(f)
+            except json.JSONDecodeError:
+                self.scores = []
+
+        # Sorteer aflopend op score
+        self.scores.sort(key=lambda x: x["score"], reverse=True)
+        # Beperk tot top 10
+        self.scores = self.scores[:10]
 
     # -----------------------------
     #   BUTTON HANDLING
@@ -81,7 +93,9 @@ class Scoreboard:
         start_y = 300
         spacing = 70
 
-        for i, (name, score) in enumerate(self.scores):
+        for i, entry in enumerate(self.scores):
+            name = entry.get("name", "Unknown")
+            score = entry.get("score", 0)
             text = f"{i+1}. {name} - {score}"
             label = self.font.render(text, True, (255, 255, 255))
             rect = label.get_rect(center=(self.width // 2, start_y + i * spacing))
