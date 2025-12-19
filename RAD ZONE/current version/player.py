@@ -182,6 +182,14 @@ class Player:
 
         # ---------- MOVEMENT ----------
         self._pos += velocity * self._speed * dt
+
+        # Clamp player position to map boundaries (7680x6400), with buffer to prevent sticking
+        player_half_width = self._rect.width // 2
+        player_half_height = self._rect.height // 2
+        buffer = 10  # Prevent getting too close to the edge
+        self._pos.x = max(player_half_width + buffer, min(self._pos.x, 7680 - player_half_width - buffer))
+        self._pos.y = max(player_half_height + buffer, min(self._pos.y, 6400 - player_half_height - buffer))
+
         self._rect.center = self._pos
 
         # ---------- ANIMATION ----------
