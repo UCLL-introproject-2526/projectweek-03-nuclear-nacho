@@ -4,11 +4,32 @@
         "score": 0
     },
     {
+<<<<<<< HEAD
         "name": "LBA",
         "score": 16
     },
     {
         "name": "MRW",
         "score": 7
+=======
+        "name": "ABC",
+        "score": 0
+    },
+    {
+        "name": "BCD",
+        "score": 0
+    },
+    {
+        "name": "PQR",
+        "score": 0
+    },
+    {
+        "name": "DDD",
+        "score": 0
+    },
+    {
+        "name": "AAA",
+        "score": 0
+>>>>>>> 60a96ad7075235216bfc9b1865a72cb2eed34c04
     }
 ]
