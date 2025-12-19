@@ -1,107 +1,88 @@
 import pygame
-from weapon import Weapon
+from sound_manager import SoundManager
 
-# ------------------------------
-#       BASE CLASS
-# ------------------------------
-class Holdable:
-    """Base class for anything the player can hold/equip."""
-    def __init__(self, item_id, icon_surf=None, char_weapon_surf=None):
+# ------------------ WEAPON ------------------
+class WeaponItem:
+    def __init__(self, item_id, sound_manager=None, icon_surf=None, weapon_surf=None, char_weapon_surf=None):
         self._id = item_id
-        self._icon = icon_surf
-        self._char_weapon = char_weapon_surf
-        self._rect = None
-        if icon_surf:
-            self._rect = icon_surf.get_rect()
+        self.icon_surf = icon_surf          # hotbar/inventory icon
+        self.weapon_surf = weapon_surf      # full weapon image for world/pickup
+        self.char_weapon_surf = char_weapon_surf  # player-held weapon image
+        self._sound_manager = sound_manager
+        self._position = pygame.Vector2(0, 0)
 
 
+
+
+
+    # ------------------ INVENTORY / SLOT ------------------
+    def get_char_weapon_surface(self):
+        return self.char_weapon_surf
+
+    def get_icon(self):
+        return self.icon_surf
 
     def get_id(self):
         return self._id
 
-    def get_icon(self):
-        return self._icon
+    def is_stackable(self):
+        return False  # Weapons are not stackable
 
-    def get_char_weapon_surface(self):
-        return self._char_weapon
-    
-        # -------------------------
-    # Added for drag & drop support
-    # -------------------------
+    def get_amount(self):
+        return 1  # Always 1 for weapons
+
+    # ------------------ DRAG & DROP ------------------
     def set_position(self, pos):
-        if self._rect:
-            self._rect.center = pos
+        self._position = pygame.Vector2(pos)
 
     def get_position(self):
-        if self._rect:
-            return self._rect.center
-        return None
-    
-    def is_stackable(self):
-        return False
-    
-    def get_amount(self):
-        return 1
+        return self._position
 
-# ------------------------------
-#       WEAPON ITEM
-# ------------------------------
-class WeaponItem(Holdable):
-    """Wraps a Weapon so it can be equipped in inventory/hotbar."""
-    def __init__(self, weapon_id, sound_manager, icon_surf=None, char_weapon_surf=None):
-        super().__init__(weapon_id, icon_surf, char_weapon_surf)
-        self._weapon = Weapon(weapon_id, sound_manager)
-        self._sound_manager = sound_manager
-
+    # ------------------ WEAPON LOGIC ------------------
     def get_weapon(self):
-        return self._weapon
-
-    def equip(self):
-        """Play equip sound via Weapon class."""
-        if self._weapon:
-            self._weapon.equip()
+        from weapon import Weapon
+        return Weapon(self._id, self._sound_manager)
 
     def play_equip_sound(self):
-        """Play equip sound from sound manager."""
         if self._sound_manager:
             self._sound_manager.play_weapon(self._id, "equip")
 
-# ------------------------------
-#     CONSUMABLE ITEM
-# ------------------------------
-class ConsumableItem(Holdable):
-    def __init__(self, item_id, sound_manager, icon_surf=None,
-                 stackable=False, amount=1, max_stack=1):
-        super().__init__(item_id, icon_surf)
+
+# ------------------ CONSUMABLE ITEM ------------------
+class ConsumableItem:
+    def __init__(self, item_id, *, sound_manager=None, icon_surf=None, stackable=True, amount=1, max_stack=1):
+        self._id = item_id
         self._sound_manager = sound_manager
-        self._stackable = stackable
-        self._amount = amount
-        self._max_stack = max_stack
+        self.icon_surf = icon_surf
+        self.stackable = stackable
+        self.amount = amount
+        self.max_stack = max_stack
+        self._position = pygame.Vector2(0, 0)
 
-    # Stack logic
-    def can_stack_with(self, other):
-        return (
-            other
-            and self._stackable
-            and other.get_id() == self._id
-            and other.get_amount() < other.get_max_stack()
-        )
+    # ------------------ INVENTORY / SLOT ------------------
+    def get_icon(self):
+        return self.icon_surf
 
-    def add_to_stack(self, amount):
-        space = self._max_stack - self._amount
-        added = min(space, amount)
-        self._amount += added
-        return added
-
-    def remove_from_stack(self, amount):
-        self._amount -= amount
-        return self._amount <= 0
-
-    def get_amount(self):
-        return self._amount
-
-    def get_max_stack(self):
-        return self._max_stack
+    def get_id(self):
+        return self._id
 
     def is_stackable(self):
-        return self._stackable
+        return self.stackable
+
+    def get_amount(self):
+        return self.amount
+
+    # ------------------ DRAG & DROP ------------------
+    def set_position(self, pos):
+        self._position = pygame.Vector2(pos)
+
+    def get_position(self):
+        return self._position
+
+    # ------------------ ITEM LOGIC ------------------
+    def use(self, player):
+        pass
+
+    def play_pickup_sound(self):
+        if self._sound_manager:
+            self._sound_manager.play_item(f"pickup_{self._id}")

@@ -76,10 +76,11 @@ class Inventory:
                 # Create a WeaponItem
                 item = WeaponItem(
                     item_id,
-                    self._player.sound,
+                    self._player.sound,      # ✅ this should be a SoundManager instance
                     icon_surf=data["icon"],
                     char_weapon_surf=data.get("char_weapon")
                 )
+
                 # Fill hotbar first
                 if hotbar_index < len(self._hotbar_slots):
                     self._hotbar_slots[hotbar_index].set_item(item)
@@ -92,12 +93,13 @@ class Inventory:
                 # Create a ConsumableItem
                 item = ConsumableItem(
                     item_id,
-                    self._player.sound,
+                    sound_manager=self._player.sound,
                     icon_surf=data["icon"],
                     stackable=data.get("stackable", False),
                     amount=data.get("amount", 1),
                     max_stack=data.get("max_stack", 1)
                 )
+
                 # Fill inventory slots
                 if inventory_index < len(self._inventory_slots):
                     self._inventory_slots[inventory_index].set_item(item)

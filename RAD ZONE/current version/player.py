@@ -62,6 +62,9 @@ class Player:
         self._inventory = inventory
 
     def set_equipped_item(self, item, play_sound=True):
+        if item is self._equipped_item:
+            return  # Already equipped, do nothing
+
         self._equipped_item = item
         if isinstance(item, WeaponItem):
             self.weapon = item.get_weapon()
@@ -71,6 +74,7 @@ class Player:
             self.weapon = None
             if play_sound and isinstance(item, ConsumableItem):
                 item.play_pickup_sound()
+
 
     # ---------- HEALTH ----------
     def get_health(self): return self._health
