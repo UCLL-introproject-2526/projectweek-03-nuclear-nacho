@@ -86,12 +86,30 @@ class Game:
         )
 
         self.buildings = [
-            load_building(
-                "RAD ZONE/current version/Graphics/building 7 V2.png",
-                (400, 768),
-                763,
-                515
-            )
+            load_building( "RAD ZONE/current version/Graphics/building 7 V2.png", (400, 768), 763, 515),
+            load_building("RAD ZONE/current version/Graphics/building 7 V3.png", (400, 768), 1150, 515),
+            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 1527, 513),
+            load_building("RAD ZONE/current version/Graphics/Building2 v3.png", (644, 704), 1920, 514),
+            load_building("RAD ZONE/current version/Graphics/Building3.png", (408, 652), 2558, 573),
+            load_building("RAD ZONE/current version/Graphics/Building6.png", (1432, 844), 3210, 438),
+            load_building("RAD ZONE/current version/Graphics/van1.png", (256, 128), 3074, 1176),
+            load_building("RAD ZONE/current version/Graphics/Building5.png", (972, 584), 5312, 620),
+            load_building("RAD ZONE/current version/Graphics/Building1.png", (392, 648), 6520, 564),
+            load_building("RAD ZONE/current version/Graphics/Building2.png", (644, 704), 1224, 1660),
+            load_building("RAD ZONE/current version/Graphics/Building1.png", (392, 648), 2570, 1728),
+            load_building("RAD ZONE/current version/Graphics/Building1.png", (392, 648), 2962, 1728),
+            load_building("RAD ZONE/current version/Graphics/kerk.png", (716, 1292), 3451, 1452),
+            load_building("RAD ZONE/current version/Graphics/building 7 V3.png", (400, 768), 4676, 1616),
+            load_building("RAD ZONE/current version/Graphics/beenhouwer.png", (408, 652), 6062, 1674),
+            load_building("RAD ZONE/current version/Graphics/pizzavan2.png", (256, 128), 5794, 2182),
+            load_building("RAD ZONE/current version/Graphics/pizzavan2.png", (256, 128), 5794, 2065), 
+            load_building("RAD ZONE/current version/Graphics/Building2_v3_flip.png", (644, 704), 1844, 1660),
+            load_building("RAD ZONE/current version/Graphics/Building2_v2_flip.png", (644, 704), 5064, 1616),
+            load_building("RAD ZONE/current version/Graphics/dead tree.png", (400, 400), 4084, 1790),
+            load_building("RAD ZONE/current version/Graphics/autumn tree.png", (400, 400), 4246, 1830),
+            load_building("RAD ZONE/current version/Graphics/Fontein.png", (600, 600), 3514, 2756),
+            load_building("RAD ZONE/current version/Graphics/Building7_flip.png", (400, 768), 4740, 2694),
+            load_building("RAD ZONE/current version/Graphics/Building7.png", (400, 768), 5136, 2692)
         ]
 
         # Inventory key state
