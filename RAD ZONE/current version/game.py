@@ -143,10 +143,7 @@ class Game:
     def start_game(self):
         w, h = self._screen.get_size()
 
-<<<<<<< HEAD
         # Create player
-=======
->>>>>>> 054a4a7f3b4518d4bea48e3c4f6d62024df01315
         self._player = Player(self.char_surf, self.char_rect, self.sound)
 
         # Create zombie spawner
