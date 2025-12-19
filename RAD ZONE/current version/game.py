@@ -146,8 +146,10 @@ class Game:
         # Create player
         self._player = Player(self.char_surf, self.char_rect, self.sound)
 
-        # Create zombie spawner
-        self._zombie_spawner = ZombieSpawner()
+
+        # Create zombie spawner (pass SoundManager)
+        self._zombie_spawner = ZombieSpawner(self.sound)
+
 
         # ⚡ Give the player access to the spawner
         self._player._zombie_spawner = self._zombie_spawner
@@ -161,6 +163,8 @@ class Game:
         # Create inventory
         self._inventory = self._create_inventory((w, h))
         self._inventory_key_down = False
+        self.sound.play_zombie_death()
+
 
 
     # ---------------- GAME LOOP ----------------
@@ -191,7 +195,7 @@ class Game:
 # ---------------- GAMEPLAY LOOP ----------------
     def _game_loop(self):
         while self.state == "PLAYING":
-            dt = self._clock.tick(60) / 1000
+            dt = self._clock.tick(120) / 1000
             current_time = pygame.time.get_ticks() / 1000
             mouse_pressed = pygame.mouse.get_pressed()
             mouse_down = mouse_pressed[0]
