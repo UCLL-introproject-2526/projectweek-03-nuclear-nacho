@@ -1,3 +1,4 @@
+
 import pygame
 from sys import exit
 
@@ -70,7 +71,7 @@ class Game:
         self.char_surf, self.char_rect = ImageLoader.load(
             "RAD ZONE/current version/Graphics/AChar.png",
             size=(150, 150),
-            center=(w // 2, h // 2)
+            center=(3840, 3200)
         )
 
         self.health = ImageLoader.load(

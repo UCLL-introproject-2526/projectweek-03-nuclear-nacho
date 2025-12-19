@@ -1,3 +1,1 @@
-- [x] Define reset_stab_state method in player.py to reset attack state
-- [x] Call reset_stab_state when equipping knife in set_equipped_item
-- [x] Test the knife stabbing on first equip
+- [x] Clamp player position to map boundaries (0-7680 x, 0-6400 y) in player.py update method to prevent player from moving off the map, thus stopping camera movement at the end.
