@@ -41,6 +41,15 @@ class SoundManager:
             }
         }
 
+        WEAPON_VOLUME = 0.25   # 👈 adjust to taste (0.0 – 1.0)
+
+        for weapon_actions in self.weapon.values():
+            for sound in weapon_actions.values():
+                if sound:  # IMPORTANT: skip None values
+                    sound.set_volume(WEAPON_VOLUME)
+
+
+
         # ---------------------- ITEM SOUNDS ----------------------
         self.items = {
             "pickup_bandage": pygame.mixer.Sound("RAD ZONE/current version/MP3/pickup_bandages.mp3"),
@@ -55,7 +64,10 @@ class SoundManager:
             for i in range(1, 17)
         ]
         for sound in self.zombie_death:
-            sound.set_volume(0.3)
+            sound.set_volume(0.5)
+
+        # for sound in self.weapon:
+        #     sound.set_volume(0.3)
 
         # ---------------------- PLAYER HURT SOUNDS ----------------------
         self.player_hurt = [
@@ -68,7 +80,7 @@ class SoundManager:
         self._player_hurt_channel = pygame.mixer.Channel(31)
 
         # Set volume for player hurt sounds
-        hurt_volume = 0.3
+        hurt_volume = 0.5
         for sound in self.player_hurt:
             sound.set_volume(hurt_volume)
 

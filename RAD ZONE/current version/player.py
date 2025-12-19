@@ -41,6 +41,9 @@ class Player:
         self._walk_speed = 400
         self._run_speed = 600
         self._speed = self._walk_speed
+        self._is_stabbing = False
+        self._stab_end_time = 0
+
 
         # ---------- STAMINA ----------
         self._max_stamina = 100
@@ -163,11 +166,10 @@ class Player:
 
     # ------------------- UPDATE -------------------
     def update(self, keys, dt, current_time, mouse_world):
-
         self._mouse_world = pygame.Vector2(mouse_world)
         self._mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
 
-
+        # ---------- MOVEMENT INPUT ----------
         dx = keys[pygame.K_d] - keys[pygame.K_q]
         dy = keys[pygame.K_s] - keys[pygame.K_z]
         velocity = pygame.Vector2(dx, dy)
@@ -176,76 +178,90 @@ class Player:
         running = keys[pygame.K_LSHIFT] and moving and not self._exhausted
         if moving:
             velocity = velocity.normalize()
-        
-        self._move_dir = velocity
 
+        self._move_dir = velocity
 
         # ---------- STAMINA UPDATE ----------
         self._update_stamina(running, dt, current_time)
 
-        # ---------- MOVEMENT ----------
+        # ---------- PLAYER POSITION ----------
         self._pos += velocity * self._speed * dt
 
-        # Clamp player position to map boundaries (7680x6400), with buffer to prevent sticking
+        # Clamp player position to map boundaries (7680x6400)
         player_half_width = self._rect.width // 2
         player_half_height = self._rect.height // 2
-        buffer = 10  # Prevent getting too close to the edge
+        buffer = 10
         self._pos.x = max(player_half_width + buffer, min(self._pos.x, 7680 - player_half_width - buffer))
         self._pos.y = max(player_half_height + buffer, min(self._pos.y, 6400 - player_half_height - buffer))
-
         self._rect.center = self._pos
 
-        # ---------- ANIMATION ----------
-        self.animator.update(velocity, dt, current_time)
+        # ---------- ANIMATION UPDATE ----------
+        self.animator.update(
+            self._move_dir,
+            dt,
+            current_time,
+            override_stab=self._is_stabbing
+        )
 
-
-        # ---------- SHOOTING ----------
+        # ---------- MOUSE INPUT ----------
         mouse_pressed = pygame.mouse.get_pressed()[0]
-        mouse_pos = pygame.Vector2(mouse_world)  # 🔽 get the aim position
+        weapon_type = self._equipped_item.get_id() if self._equipped_item else "knife"
 
-        if self.weapon:
+        # ---------- KNIFE ATTACK ----------
+        if weapon_type == "knife" and mouse_pressed and not self._was_mouse_pressed:
+            if self.weapon.shoot(current_time):
+                self._is_stabbing = True
+                self._stab_end_time = current_time + 0.4
+                self.animator.play_stab()  # Start stab animation
+                self._attack_last_time = current_time
+                self._attack_targets_hit = set()
+                self._apply_knife_damage()
+
+        # Stop stabbing after duration
+        if self._is_stabbing and current_time >= self._stab_end_time:
+            self._is_stabbing = False
+
+        # ---------- GUN ATTACK ----------
+        if self.weapon and weapon_type != "knife":
             if self.weapon.full_auto:
                 if mouse_pressed:
                     if self.weapon.shoot(current_time):
-                        self._apply_gun_damage()  # no args needed anymore
+                        self._apply_gun_damage()
             else:
                 if mouse_pressed and not self._was_mouse_pressed:
                     if self.weapon.shoot(current_time):
                         self._apply_gun_damage()
 
-
-
-        self._was_mouse_pressed = mouse_pressed
-
-
         # ---------- RELOAD ----------
         if keys[pygame.K_r]:
             self.weapon.reload()
 
-        # ---------- ATTACK ANIMATION----------
-        mouse_pressed = pygame.mouse.get_pressed()[0]
-
-        weapon_type = self._equipped_item.get_id() if self._equipped_item else "knife"
-
-
-        if weapon_type == "knife" and mouse_pressed and not self._was_mouse_pressed:
-            if self.weapon.shoot(current_time):  # triggers knife sound
-                self.animator.play_stab(current_time, 0.4)
-                self._attack_last_time = current_time
-                self._attack_targets_hit = set()
-                self._apply_knife_damage()
-
-        # else:
-        #     # gun
-        #     if mouse_pressed and (self.weapon.full_auto or not self._was_mouse_pressed):
-        #         if self.weapon.shoot(current_time):
-        #             # optional: play shooting animation here
-        #             pass
-
+        # ---------- UPDATE LAST MOUSE STATE ----------
         self._was_mouse_pressed = mouse_pressed
 
 
+    # ---------- MELEE DAMAGE HELPER ----------
+    def _apply_knife_damage(self):
+        """Apply damage to nearby zombies when stabbing."""
+        if not hasattr(self, "_zombie_spawner") or self._zombie_spawner is None:
+            return
 
+        player_pos = self._pos
+
+        for zombie in self._zombie_spawner.get_zombies():
+            if zombie.is_dead() or zombie in self._attack_targets_hit:
+                continue
+
+            distance = (zombie.get_position() - player_pos).length()
+            if distance <= 100:  # knife range
+                knockback_dir = (zombie.get_position() - player_pos)
+                if knockback_dir.length_squared() > 0:
+                    knockback_dir = knockback_dir.normalize()
+                else:
+                    knockback_dir = pygame.Vector2(0, -1)
+
+                zombie.take_damage(50, knockback_dir, current_time=pygame.time.get_ticks()/1000)
+                self._attack_targets_hit.add(zombie)
 
     # ------------------- DRAW -------------------
     def draw(self, screen):

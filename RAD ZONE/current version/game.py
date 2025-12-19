@@ -318,13 +318,23 @@ class Game:
     # ---------------- KNIFE LOGIC ----------------
     def _handle_attack(self, current_time, player_pos):
         player = self._player
+
         if player._equipped_item and player._equipped_item.get_id() == "knife":
             if current_time - player._attack_last_time > 0.5:
+
+                # ✅ START STAB ANIMATION
+                player.animator.play_stab()
+
                 for zombie in self._zombie_spawner.get_zombies():
                     if zombie not in player._attack_targets_hit and not zombie._is_dead:
                         if (zombie.get_position() - player_pos).length() < 100:
-                            zombie.take_damage(50, zombie.get_position() - player_pos, current_time)
+                            zombie.take_damage(
+                                50,
+                                zombie.get_position() - player_pos,
+                                current_time
+                            )
                             player._attack_targets_hit.add(zombie)
+
                 player._attack_last_time = current_time
 
 

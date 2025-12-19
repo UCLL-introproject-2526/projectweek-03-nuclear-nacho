@@ -60,85 +60,49 @@ def load_sheet_anim(path, frames_per_dir):
 # ---------- ANIMATOR CLASS ----------
 class Animator:
     def __init__(self, assets_path):
-        """
-        assets_path wordt momenteel niet gebruikt (legacy), maar behouden voor compatibiliteit.
-        Idle, Walk en Stab sheets worden hard-coded geladen.
-        """
         self.state = "idle"
         self.direction = "front"
         self.frame_index = 0.0
 
-        try:
-            self.animations = {
-                "idle": load_sheet_anim(
-                    os.path.join("RAD ZONE", "current version", "Graphics", "Idle.png"), 
-                    frames_per_dir=1
-                ),
-                "walk": load_sheet_anim(
-                    os.path.join("RAD ZONE", "current version", "Graphics", "Walk.png"), 
-                    frames_per_dir=3
-                ),
-                "stab": load_sheet_anim(
-                    os.path.join("RAD ZONE", "current version", "Graphics", "Stab.png"), 
-                    frames_per_dir=4
-                ),
-            }
-            print("[OK] Idle, Walk en Stab animaties geladen")
-        except Exception as e:
-            print(f"[FOUT] Kon Idle/Walk/Stab sheets niet laden: {e}")
-            # Fallback: lege afbeelding zodat game niet crasht
-            empty = pygame.Surface((FRAME_W * SCALE, FRAME_H * SCALE), pygame.SRCALPHA)
-            self.animations = {
-                "idle": {"front": [empty]},
-                "walk": {"front": [empty]},
-                "stab": {"front": [empty]}
-            }
+        self.animations = {
+            "idle": load_sheet_anim("RAD ZONE/current version/Graphics/Idle.png", frames_per_dir=1),
+            "walk": load_sheet_anim("RAD ZONE/current version/Graphics/Walk.png", frames_per_dir=3),
+            "stab": load_sheet_anim("RAD ZONE/current version/Graphics/Stab.png", frames_per_dir=4),
+        }
 
         self.image = self.animations["idle"]["front"][0]
-        self.stab_end_time = 0  # When stab animation ends
 
-    def update(self, velocity: pygame.Vector2, dt: float, current_time: float = 0):
-        """
-        Update animatie op basis van beweging.
-        """
-        # Check if stab animation is still playing
-        if self.state == "stab" and current_time < self.stab_end_time:
-            # Continue stab animation
+
+    def update(self, velocity: pygame.Vector2, dt: float, current_time: float = 0, override_stab: bool = False):
+        """Update animation frames"""
+
+        # If Player is stabbing, keep stab animation
+        if override_stab:
+            self.state = "stab"
             frames = self.animations[self.state][self.direction]
             self.frame_index = (self.frame_index + ANIM_FPS * dt) % len(frames)
             self.image = frames[int(self.frame_index)]
             return
-        
-        # Stab animation finished, return to normal animation
-        if self.state == "stab":
-            self.state = "idle"
-            self.frame_index = 0
-        
+
+        # Normal movement/idle animation
         if velocity.length() > 0:
             self.state = "walk"
-            # Bepaal richting
             if abs(velocity.x) > abs(velocity.y):
                 self.direction = "right" if velocity.x > 0 else "left"
             else:
                 self.direction = "front" if velocity.y > 0 else "back"
         else:
             self.state = "idle"
-            self.frame_index = 0  # altijd eerste idle frame
+            self.frame_index = 0
 
-        # Frame vooruitspoelen
         frames = self.animations[self.state][self.direction]
         self.frame_index = (self.frame_index + ANIM_FPS * dt) % len(frames)
         self.image = frames[int(self.frame_index)]
 
-    def play_stab(self, current_time: float, duration: float = 1.0):
-        """
-        Start playing the stab animation.
-        current_time: current game time in seconds
-        duration: how long the stab animation should play
-        """
+    def play_stab(self):
         self.state = "stab"
         self.frame_index = 0
-        self.stab_end_time = current_time + duration
+
 
     def get_image(self) -> pygame.Surface:
         return self.image
