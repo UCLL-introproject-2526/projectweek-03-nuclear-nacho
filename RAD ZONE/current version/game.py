@@ -148,6 +148,9 @@ class Game:
                 elif choice == "Play":
                     self.start_game()
                     self.state = "PLAYING"
+                elif choice == "Credits":
+                    from credits import CreditsScreen
+                    CreditsScreen(self._screen).run()
 
             elif self.state == "PLAYING":
                 self._game_loop()

@@ -12,7 +12,7 @@ class PauseMenu:
         button_width = w // 4
         self.buttons = {}
 
-        button_names = ["Resume", "CommitScore", "Settings", "Quit"]
+        button_names = ["Resume", "Settings", "Quit"]
         start_y = 250
         spacing = int(h * 0.12)
         center_x = w // 2
