@@ -158,8 +158,10 @@ class Game:
         # Create player
         self._player = Player(self.char_surf, self.char_rect, self.sound)
 
-        # Create zombie spawner
-        self._zombie_spawner = ZombieSpawner()
+
+        # Create zombie spawner (pass SoundManager)
+        self._zombie_spawner = ZombieSpawner(self.sound)
+
 
         # ⚡ Give the player access to the spawner
         self._player._zombie_spawner = self._zombie_spawner
@@ -173,6 +175,8 @@ class Game:
         # Create inventory
         self._inventory = self._create_inventory((w, h))
         self._inventory_key_down = False
+        # self.sound.play_zombie_death()
+
 
 
     # ---------------- GAME LOOP ----------------

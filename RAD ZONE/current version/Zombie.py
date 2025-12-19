@@ -78,7 +78,8 @@ class ZombieAnimator:
 #                     ZOMBIE
 # ==================================================
 class Zombie:
-    def __init__(self, x, y):
+    def __init__(self, x, y, sound_manager):
+        self.sound = sound_manager 
         self._pos = pygame.Vector2(x, y)
         self._rect = pygame.Rect(0, 0, 128, 128)
         self._rect.center = self._pos
@@ -101,6 +102,8 @@ class Zombie:
         self._damage_per_second = 15
 
         self._is_dead = False
+        self._death_sound_played = False
+
 
         self._knockback_velocity = pygame.Vector2()
         self._knockback_end_time = 0
@@ -122,21 +125,39 @@ class Zombie:
         if self._health <= 0:
             self._health = 0
             self._is_dead = True
+            self.death_time = current_time  # track when zombie died
+
+            if not self._death_sound_played:
+                self.sound.play_zombie_death()  # play sound once
+                self._death_sound_played = True
+
             self.state = "death"
             self.animator.set_death(current_time)
 
+
     def update(self, player_pos, dt, current_time):
-        if not self.animator.update(self.state, self.direction, dt, current_time):
-            return False  # remove zombie
-
+        # ---------------- DEAD ZOMBIE LOGIC ----------------
         if self._is_dead:
-            return True
+            # update the death animation
+            self.animator.update(self.state, self.direction, dt, current_time)
 
+            # remove zombie after short delay (e.g., 0.3s) so sound can play
+            if current_time - getattr(self, 'death_time', 0) >= 0.3:
+                return False  # tell spawner to remove this zombie
+
+            return True  # keep zombie on screen for animation/sound
+
+        # ---------------- ALIVE ZOMBIE LOGIC ----------------
+        if not self.animator.update(self.state, self.direction, dt, current_time):
+            return False  # remove zombie if animation finished
+
+        # knockback movement
         if current_time < self._knockback_end_time:
             self._pos += self._knockback_velocity * dt
         else:
             self._knockback_velocity = pygame.Vector2()
 
+        # movement toward player
         direction = player_pos - self._pos
         distance = direction.length()
 
@@ -147,6 +168,7 @@ class Zombie:
             else:
                 self.direction = "front" if direction.y > 0 else "back"
 
+        # attack logic
         if self._is_attacking and current_time >= self._attack_end_time:
             self._is_attacking = False
             self.state = "walk"
@@ -165,6 +187,7 @@ class Zombie:
 
         self._rect.center = self._pos
         return True
+
 
     def draw(self, screen, camera):
         screen_pos = self._pos - camera.get_position()
@@ -196,7 +219,8 @@ class Zombie:
 #                 ZOMBIE SPAWNER
 # ==================================================
 class ZombieSpawner:
-    def __init__(self):
+    def __init__(self, sound_manager):
+        self.sound = sound_manager
         self.zombies = []
         self.kill_count = 0
 
@@ -247,7 +271,9 @@ class ZombieSpawner:
         distance = 400
         x = player_pos.x + math.cos(angle) * distance
         y = player_pos.y + math.sin(angle) * distance
-        self.zombies.append(Zombie(x, y))
+
+        self.zombies.append(Zombie(x, y, self.sound))  # ✅ PASS SOUND
+
 
     def draw(self, screen, camera):
         for zombie in sorted(self.zombies, key=lambda z: z.get_position().y):
