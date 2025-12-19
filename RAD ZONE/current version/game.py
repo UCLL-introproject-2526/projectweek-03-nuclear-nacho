@@ -10,7 +10,7 @@ from assets import ImageLoader
 from sound_manager import SoundManager
 from inventory import Inventory
 from hoofdscherm import Menu
-from Zombie import ZombieSpawner
+from zombie import ZombieSpawner
 from scoreboard import Scoreboard
 from pause_menu import PauseMenu
 from death_screen import DeathScreen
@@ -267,7 +267,7 @@ class Game:
                 else:
                     obj.draw(self._screen, self._camera)
 
-            if self._ui and self._player:
+            if self._ui:
                 self._ui.draw(
                     self._screen,
                     self._player.get_health(),

@@ -1,6 +1,8 @@
 import pygame
 from weapon import Weapon
 from animation import Animator
+from zombie import Zombie
+
 
 class Player:
     def __init__(self, surf, rect, sound):
@@ -69,13 +71,6 @@ class Player:
     def is_exhausted(self):
         return self._exhausted
     
-    # def set_equipped_item(self, item):
-    #     if not item:
-    #         return
-    #     self._equipped_item = item  # store full inventory item object
-    #     self.weapon = Weapon(item.name, self.sound)
-    #     self.weapon.equip()
-
     def set_equipped_item(self, item):
         self._equipped_item = item  # always store the item
 
@@ -88,10 +83,20 @@ class Player:
             # For consumables or None, fallback to knife or leave weapon unchanged
             self.weapon = Weapon("knife", self.sound) if item is None else self.weapon
 
+    def play_equip_sound(self, item):
+        if item is None:
+            return
 
+        weapon_ids = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow"]
 
-
-
+        if item.get_id() in weapon_ids:
+            # Weapons → equip sound
+            self.sound.play_weapon(item.get_id(), "equip")
+        else:
+            # Other items → pickup sound
+            pickup_sound_id = f"pickup_{item.get_id()}"
+            if pickup_sound_id in self.sound.items:
+                self.sound.play_item(pickup_sound_id)
 
 
 
@@ -304,25 +309,24 @@ class Player:
         player_pos = self._pos
         mouse_pos = self._mouse_world
         shot_dir = mouse_pos - player_pos
-        distance_to_mouse = shot_dir.length()
-        if distance_to_mouse == 0:
+
+        if shot_dir.length_squared() == 0:
             return
         shot_dir = shot_dir.normalize()  # unit vector along the shot
 
         for zombie in self._zombie_spawner.get_zombies():
+            if not isinstance(zombie, Zombie):
+                continue
+            if zombie.is_dead():
+                continue
             if zombie.is_dead():
                 continue
 
             to_zombie = zombie.get_position() - player_pos
 
-            # Project zombie onto shot direction
             distance_along_shot = to_zombie.dot(shot_dir)
-
-            # Check if zombie is in front and within range
             if 0 <= distance_along_shot <= self.weapon.range:
-                # Perpendicular distance from zombie to shot line
-                perp_dist = (to_zombie - shot_dir * distance_along_shot).length()
-                if perp_dist <= self.weapon.width / 2:  # use half width for tolerance
-                    zombie.take_damage(self.weapon.damage, shot_dir, pygame.time.get_ticks() / 1000)
-
-
+                perp_dist_vec = to_zombie - shot_dir * distance_along_shot
+                if perp_dist_vec.length_squared() <= (self.weapon.width / 2) ** 2:
+                    knockback_dir = perp_dist_vec if perp_dist_vec.length_squared() > 0 else shot_dir
+                    zombie.take_damage(self.weapon.damage, knockback_dir, current_time=pygame.time.get_ticks()/1000)

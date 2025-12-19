@@ -102,16 +102,34 @@ class Inventory:
         self._open = not self._open
 
     def select_next(self):
+        prev_index = self._selected_hotbar
         self._selected_hotbar = (self._selected_hotbar + 1) % len(self._hotbar)
-        weapon_item = self._hotbar[self._selected_hotbar].get_item()
-        self._player.set_equipped_item(weapon_item)
-        self._equipped_item = weapon_item  # keep your Inventory in sync
+
+        prev_item = self._equipped_item
+        new_item = self._hotbar[self._selected_hotbar].get_item()
+
+        self._player.set_equipped_item(new_item)
+        self._equipped_item = new_item
+
+        # Play sound only if the new item exists AND is different from the previous
+        if new_item is not None and new_item != prev_item:
+            self._player.play_equip_sound(new_item)
+
 
     def select_previous(self):
+        prev_index = self._selected_hotbar
         self._selected_hotbar = (self._selected_hotbar - 1) % len(self._hotbar)
-        weapon_item = self._hotbar[self._selected_hotbar].get_item()
-        self._player.set_equipped_item(weapon_item)
-        self._equipped_item = weapon_item
+
+        prev_item = self._equipped_item
+        new_item = self._hotbar[self._selected_hotbar].get_item()
+
+        self._player.set_equipped_item(new_item)
+        self._equipped_item = new_item
+
+        # Play sound only if the new item exists AND is different from the previous
+        if new_item is not None and new_item != prev_item:
+            self._player.play_equip_sound(new_item)
+
 
 
 
@@ -173,6 +191,49 @@ class Inventory:
         # RIGHT CLICK to use equipped item
         if pygame.mouse.get_pressed()[2] and self._equipped_item:
             self.use_item(self._equipped_item)
+
+        if release and self._dragged_item:
+            target = None
+            for slot in slots:
+                if slot.is_hovered():
+                    target = slot
+                    break
+
+            if target is None:
+                # Drop back to original slot
+                self._drag_origin.set_item(self._dragged_item)
+            else:
+                target_item = target.get_item()
+                if target_item is None:
+                    target.set_item(self._dragged_item)
+                    if target in self._hotbar:
+                        # Only play sound if the dropped item is different from currently equipped item
+                        if target in self._hotbar:
+                            slot_index = self._hotbar.index(target)
+                            if slot_index == self._selected_hotbar and self._dragged_item != self._equipped_item:
+                                self._player.play_equip_sound(self._dragged_item)
+
+                elif target_item.can_stack_with(self._dragged_item):
+                    added = target_item.add_to_stack(self._dragged_item.get_amount())
+                    if added < self._dragged_item.get_amount():
+                        self._dragged_item.remove_from_stack(added)
+                        self._drag_origin.set_item(self._dragged_item)
+                else:
+                    # Swap items
+                    temp = target_item
+                    target.set_item(self._dragged_item)
+                    self._drag_origin.set_item(temp)
+                    if target in self._hotbar:
+                        # Only play sound if the dropped item is different from currently equipped item
+                        if target in self._hotbar:
+                            slot_index = self._hotbar.index(target)
+                            if slot_index == self._selected_hotbar and self._dragged_item != self._equipped_item:
+                                self._player.play_equip_sound(self._dragged_item)
+
+
+            self._dragged_item = None
+            self._drag_origin = None
+
 
     # ---------- ITEM USAGE ----------
     def use_item(self, item):

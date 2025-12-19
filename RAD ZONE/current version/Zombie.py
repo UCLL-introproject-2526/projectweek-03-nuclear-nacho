@@ -104,6 +104,10 @@ class Zombie:
 
         self._knockback_velocity = pygame.Vector2()
         self._knockback_end_time = 0
+    
+    def is_dead(self):
+        """Returns True if zombie is dead."""
+        return self._is_dead
 
     def take_damage(self, damage, knockback_dir=None, current_time=0):
         if self._is_dead:
