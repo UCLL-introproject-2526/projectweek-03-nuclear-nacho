@@ -75,9 +75,6 @@ class Player:
     def get_health(self): return self._health
     def get_max_health(self): return self._max_health
     def is_exhausted(self): return self._exhausted
-
-    def is_exhausted(self):
-        return self._exhausted
     
     def set_equipped_item(self, item, play_sound=True):
         self._equipped_item = item
