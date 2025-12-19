@@ -54,6 +54,8 @@ class SoundManager:
             pygame.mixer.Sound(f"RAD ZONE/current version/MP3/zomdie_die_{i}.mp3")
             for i in range(1, 17)
         ]
+        for sound in self.zombie_death:
+            sound.set_volume(0.3)
 
         # ---------------------- PLAYER HURT SOUNDS ----------------------
         self.player_hurt = [
@@ -69,6 +71,11 @@ class SoundManager:
         hurt_volume = 0.3
         for sound in self.player_hurt:
             sound.set_volume(hurt_volume)
+
+        
+        # PLAYER DEATH SOUND
+        self.player_death = pygame.mixer.Sound("RAD ZONE/current version/MP3/scream_wilhelm.mp3")
+        self.player_death.set_volume(0.5)
 
         # ---------------------- EQUIP SOUND TRACKING ----------------------
         self._current_equip_sound = None
@@ -99,3 +106,10 @@ class SoundManager:
     # ---------------------- ZOMBIE ----------------------
     def play_zombie_death(self):
         random.choice(self.zombie_death).play()
+
+
+    # ---------------------- PLAYER DEATH PLAY FUNCTION ----------------------
+    def play_player_death(self):
+        # Play the death sound on a dedicated channel to prevent overlap with hurt sounds
+        pygame.mixer.find_channel(True).play(self.player_death)
+

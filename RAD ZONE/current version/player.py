@@ -35,6 +35,7 @@ class Player:
         # ---------- HEALTH ----------
         self._max_health = 100
         self._health = self._max_health
+        self._is_dead = False  # add this flag
 
         # ---------- MOVEMENT ----------
         self._walk_speed = 400
@@ -112,10 +113,18 @@ class Player:
         return self._max_health
     
     def take_damage(self, damage):
+        if self._is_dead:
+            return  # already dead, do nothing
+
         self._health -= damage
         self._health = max(0, self._health)
+
         if self.sound:
-            self.sound.play_player_hurt()
+            if self._health > 0:
+                self.sound.play_player_hurt()
+            else:
+                self.sound.play_player_death()
+                self._is_dead = True
         
     def get_stamina(self):
         return self._stamina

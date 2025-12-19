@@ -306,6 +306,8 @@ class Game:
 
             # Death check
             if self._player.get_health() <= 0:
+                # Wait a short moment to let the death sound start
+                pygame.time.delay(100)  # 100 ms
                 self.state = "DEAD"
                 return
 
