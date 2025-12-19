@@ -179,7 +179,7 @@ class Game:
     # ---------------- GAMEPLAY LOOP ----------------
     def _game_loop(self):
         while self.state == "PLAYING":
-            dt = self._clock.tick(60) / 1000
+            dt = self._clock.tick(120) / 1000
             current_time = pygame.time.get_ticks() / 1000
             mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
