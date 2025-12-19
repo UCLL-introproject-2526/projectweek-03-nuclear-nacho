@@ -130,14 +130,26 @@ class Game:
     # ---------------- START GAME ----------------
     def start_game(self):
         w, h = self._screen.get_size()
+
+        # Create player
         self._player = Player(self.char_surf, self.char_rect, self.sound)
+
+        # Create zombie spawner
+        self._zombie_spawner = ZombieSpawner()
+
+        # ⚡ Give the player access to the spawner
+        self._player._zombie_spawner = self._zombie_spawner
+
+        # Create camera, world, UI, minimap
         self._camera = Camera(w, h)
         self._world = World(self.map_surf, self.buildings)
         self._ui = UI(self.health, self.stamina, self.outline)
         self._minimap = Minimap(self.map_surf, self.buildings, (w, h))
-        self._zombie_spawner = ZombieSpawner()
+
+        # Create inventory
         self._inventory = self._create_inventory((w, h))
         self._inventory_key_down = False
+
 
     # ---------------- GAME LOOP ----------------
     def run(self):
@@ -158,11 +170,11 @@ class Game:
                 self._game_loop()
 
     # ---------------- GAMEPLAY LOOP ----------------
+# ---------------- GAMEPLAY LOOP ----------------
     def _game_loop(self):
         while self.state == "PLAYING":
             dt = self._clock.tick(60) / 1000
             current_time = pygame.time.get_ticks() / 1000
-            mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
             mouse_down = mouse_pressed[0]
             mouse_up = not mouse_pressed[0]
@@ -187,11 +199,7 @@ class Game:
                             pass
                         elif action == "Quit":
                             self.state = "MENU"
-                            return  # stop gameplay loop veilig
-                        elif action == "Settings":
-                            print("Open Settings menu")
-                        elif action == "CommitScore":
-                            print("Open Commit Score menu")
+                            return
                 if event.type == pygame.KEYUP and event.key == pygame.K_e:
                     self._inventory_key_down = False
 
@@ -199,10 +207,17 @@ class Game:
 
             # ---------------- GAMEPLAY ----------------
             if self._player:
-                self._player.update(keys, dt, current_time)
                 player_pos = pygame.Vector2(self._player.get_rect().center)
+
             if self._camera and self._player:
                 self._camera.update(player_pos)
+
+            # ✅ FIXED: convert mouse to world coordinates
+            if self._camera and self._player:
+                mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
+                mouse_world = mouse_screen + self._camera.get_position()  # world coordinates
+                self._player.update(keys, dt, current_time, mouse_world)
+
             if self._zombie_spawner and self._player:
                 self._zombie_spawner.update(player_pos, dt, current_time)
 
@@ -210,21 +225,23 @@ class Game:
                 self._handle_attack(current_time, player_pos)
                 self._handle_zombie_attacks(player_pos, dt)
 
-                # Drawing
-                self._screen.fill((0, 0, 0))
-                if self._world:
-                    self._world.draw(self._screen, self._camera)
+            # ---------------- DRAWING ----------------
+            self._screen.fill((0, 0, 0))
+
+            if self._world:
+                self._world.draw(self._screen, self._camera)
+
+            if self._inventory:
                 equipped_item = self._inventory.get_equipped_item()
                 if equipped_item is not None:
                     self._player.set_equipped_item(equipped_item)
 
-
-
-
+            # Draw player and zombies sorted by Y
             drawables = [("player", self._player, player_pos.y)]
             if self._zombie_spawner:
                 for zombie in self._zombie_spawner.get_zombies():
                     drawables.append(("zombie", zombie, zombie.get_position().y))
+
             for obj_type, obj, _ in sorted(drawables, key=lambda x: x[2]):
                 if obj_type == "player":
                     obj.draw(self._screen)
@@ -232,41 +249,38 @@ class Game:
                     obj.draw(self._screen, self._camera)
 
             if self._ui:
-                self._ui.draw(self._screen,
-                              self._player.get_health(),
-                              self._player.get_max_health(),
-                              self._player.get_stamina(),
-                              100)
+                self._ui.draw(
+                    self._screen,
+                    self._player.get_health(),
+                    self._player.get_max_health(),
+                    self._player.get_stamina(),
+                    100
+                )
+
             if self._minimap:
                 self._minimap.draw(self._screen, player_pos)
+
             if self._inventory:
                 self._inventory.draw(self._screen)
-                self._inventory.update(mouse_pos, mouse_down, mouse_up)
-
-            # equipped_item = self._inventory.get_equipped_item()
-            # if equipped_item:
-            #     self._player.set_equipped_item(equipped_item.get_id())  # get_id() returns item_id
-
-
+                self._inventory.update(pygame.mouse.get_pos(), mouse_down, mouse_up)
 
             pygame.display.flip()
+
 
     # ---------------- KNIFE LOGIC ----------------
     def _handle_attack(self, current_time, player_pos):
         player = self._player
-        weapon = player.weapon
-
-        if weapon.name == "knife":
-            # only attack if cooldown passed
-            if current_time - player._attack_last_time < 0.5:
+        if player._equipped_item and player._equipped_item.get_id() == "knife":
+            if current_time - player._attack_last_time > 0.5:
                 for zombie in self._zombie_spawner.get_zombies():
                     if zombie not in player._attack_targets_hit and not zombie.is_dead():
                         if (zombie.get_position() - player_pos).length() < 100:
                             zombie.take_damage(50, zombie.get_position() - player_pos, current_time)
                             player._attack_targets_hit.add(zombie)
-        else:
-            # guns handled in Player.update()
-            pass
+                player._attack_last_time = current_time
+
+
+
 
 
     # ---------------- ZOMBIE ATTACKS ----------------

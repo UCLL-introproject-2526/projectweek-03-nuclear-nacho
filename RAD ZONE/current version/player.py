@@ -6,6 +6,9 @@ class Player:
     def __init__(self, surf, rect, sound):
 
         self._move_dir = pygame.Vector2()
+        self._mouse_screen = pygame.Vector2(0, 0)  # initialize to avoid AttributeError
+        self._mouse_world = pygame.Vector2(0, 0)   # also initialize world mouse
+
 
         self._equipped_item = None
 
@@ -136,7 +139,12 @@ class Player:
         self._display_stamina += (target_ratio - self._display_stamina) * min(lerp_speed * dt, 1)
 
     # ------------------- UPDATE -------------------
-    def update(self, keys, dt, current_time):
+    def update(self, keys, dt, current_time, mouse_world):
+
+        self._mouse_world = pygame.Vector2(mouse_world)
+        self._mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
+
+
         dx = keys[pygame.K_d] - keys[pygame.K_q]
         dy = keys[pygame.K_s] - keys[pygame.K_z]
         velocity = pygame.Vector2(dx, dy)
@@ -159,12 +167,25 @@ class Player:
         # ---------- ANIMATION ----------
         self.animator.update(velocity, dt, current_time)
 
+
         # ---------- SHOOTING ----------
         mouse_pressed = pygame.mouse.get_pressed()[0]
-        if mouse_pressed:
-            if self.weapon.full_auto or not self._was_mouse_pressed:
-                self.weapon.shoot(current_time)
+        mouse_pos = pygame.Vector2(mouse_world)  # 🔽 get the aim position
+
+        if self.weapon:
+            if self.weapon.full_auto:
+                if mouse_pressed:
+                    if self.weapon.shoot(current_time):
+                        self._apply_gun_damage()  # no args needed anymore
+            else:
+                if mouse_pressed and not self._was_mouse_pressed:
+                    if self.weapon.shoot(current_time):
+                        self._apply_gun_damage()
+
+
+
         self._was_mouse_pressed = mouse_pressed
+
 
         # ---------- RELOAD ----------
         if keys[pygame.K_r]:
@@ -176,18 +197,18 @@ class Player:
         weapon_type = self._equipped_item.get_id() if self._equipped_item else "knife"
 
 
-        if weapon_type == "knife":
-            if mouse_pressed and not self._was_mouse_pressed:
-                if current_time - self._attack_last_time > 0.5:
-                    self.animator.play_stab(current_time, duration=0.4)
-                    self._attack_last_time = current_time
-                    self._attack_targets_hit = set()
-        else:
-            # gun
-            if mouse_pressed and (self.weapon.full_auto or not self._was_mouse_pressed):
-                if self.weapon.shoot(current_time):
-                    # optional: play shooting animation here
-                    pass
+        if weapon_type == "knife" and mouse_pressed and not self._was_mouse_pressed:
+            if self.weapon.shoot(current_time):  # triggers knife sound
+                self.animator.play_stab(current_time, 0.4)
+                self._attack_last_time = current_time
+                self._attack_targets_hit = set()
+
+        # else:
+        #     # gun
+        #     if mouse_pressed and (self.weapon.full_auto or not self._was_mouse_pressed):
+        #         if self.weapon.shoot(current_time):
+        #             # optional: play shooting animation here
+        #             pass
 
         self._was_mouse_pressed = mouse_pressed
 
@@ -250,7 +271,7 @@ class Player:
         )
 
         player_center = pygame.Vector2(screen.get_rect().center)
-        mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
+        mouse_pos = self._mouse_screen
         direction = mouse_pos - player_center
 
         if direction.length() == 0:
@@ -276,6 +297,32 @@ class Player:
 
         screen.blit(rotated, rect)
 
+    def _apply_gun_damage(self):
+        if not hasattr(self, "_zombie_spawner") or self._zombie_spawner is None:
+            return
+
+        player_pos = self._pos
+        mouse_pos = self._mouse_world
+        shot_dir = mouse_pos - player_pos
+        distance_to_mouse = shot_dir.length()
+        if distance_to_mouse == 0:
+            return
+        shot_dir = shot_dir.normalize()  # unit vector along the shot
+
+        for zombie in self._zombie_spawner.get_zombies():
+            if zombie.is_dead():
+                continue
+
+            to_zombie = zombie.get_position() - player_pos
+
+            # Project zombie onto shot direction
+            distance_along_shot = to_zombie.dot(shot_dir)
+
+            # Check if zombie is in front and within range
+            if 0 <= distance_along_shot <= self.weapon.range:
+                # Perpendicular distance from zombie to shot line
+                perp_dist = (to_zombie - shot_dir * distance_along_shot).length()
+                if perp_dist <= self.weapon.width / 2:  # use half width for tolerance
+                    zombie.take_damage(self.weapon.damage, shot_dir, pygame.time.get_ticks() / 1000)
 
 
-    
