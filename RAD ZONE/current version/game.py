@@ -163,7 +163,7 @@ class Game:
         # Create inventory
         self._inventory = self._create_inventory((w, h))
         self._inventory_key_down = False
-        self.sound.play_zombie_death()
+        # self.sound.play_zombie_death()
 
 
 
