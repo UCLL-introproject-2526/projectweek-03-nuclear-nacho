@@ -294,7 +294,8 @@ class Game:
                     self._player.get_health(),
                     self._player.get_max_health(),
                     self._player.get_stamina(),
-                    100
+                    100,
+                    self._zombie_spawner.current_wave
                 )
             if self._minimap:
                 self._minimap.draw(self._screen, player_pos)
