@@ -1,0 +1,3 @@
+- [x] Define reset_stab_state method in player.py to reset attack state
+- [x] Call reset_stab_state when equipping knife in set_equipped_item
+- [x] Test the knife stabbing on first equip

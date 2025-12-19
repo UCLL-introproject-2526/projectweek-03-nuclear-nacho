@@ -59,6 +59,10 @@ class Player:
         self._attack_targets_hit = set()  # For melee hits
         self._attack_key_was_pressed = False
 
+    def reset_stab_state(self):
+        self._attack_last_time = 0
+        self._attack_targets_hit = set()
+
 
     # ------------------- GETTERS -------------------
     def get_rect(self): return self._rect
@@ -79,6 +83,8 @@ class Player:
         if item is not None and item.get_id() in weapon_ids:
             self.weapon = Weapon(item.get_id(), self.sound)
             self.weapon.equip()
+            if item.get_id() == "knife":
+                self.reset_stab_state()
         else:
             # For consumables or None, fallback to knife or leave weapon unchanged
             self.weapon = Weapon("knife", self.sound) if item is None else self.weapon
@@ -207,6 +213,7 @@ class Player:
                 self.animator.play_stab(current_time, 0.4)
                 self._attack_last_time = current_time
                 self._attack_targets_hit = set()
+                self._apply_knife_damage()
 
         # else:
         #     # gun
