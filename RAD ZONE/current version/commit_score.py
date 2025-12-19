@@ -115,9 +115,11 @@ class CommitScoreScreen:
 
     def save_score(self, name, score):
         try:
-            with open("scores.json", "r") as f:
+            with open("RAD ZONE/current version/scores.json", "r") as f:
                 data = json.load(f)
         except FileNotFoundError:
+            data = []
+        except json.JSONDecodeError:
             data = []
 
         data.append({"name": name, "score": score})

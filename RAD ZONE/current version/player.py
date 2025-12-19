@@ -59,6 +59,10 @@ class Player:
         self._attack_targets_hit = set()  # For melee hits
         self._attack_key_was_pressed = False
 
+    def reset_stab_state(self):
+        self._attack_last_time = 0
+        self._attack_targets_hit = set()
+
 
     # ------------------- GETTERS -------------------
     def get_rect(self): return self._rect
@@ -207,6 +211,7 @@ class Player:
                 self.animator.play_stab(current_time, 0.4)
                 self._attack_last_time = current_time
                 self._attack_targets_hit = set()
+                self._apply_knife_damage()
 
         # else:
         #     # gun

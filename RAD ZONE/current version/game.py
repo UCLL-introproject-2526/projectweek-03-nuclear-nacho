@@ -131,7 +131,19 @@ class Game:
                        "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/pistool.png"),
                        "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_pistool.png")},
             "knife": {"icon": load_icon("RAD ZONE/current version/Graphics/knife.png"),
-                      "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png")}
+                      "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png")},
+            "revolver": {"icon": load_icon("RAD ZONE/current version/Graphics/revolver.png"),
+                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/revolver.png"),
+                         "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_revolver.png")},
+            "shotgun": {"icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
+                        "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png"),
+                        "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_shotgun.png")},
+            "crossbow": {"icon": load_icon("RAD ZONE/current version/Graphics/crossbow.png"),
+                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/crossbow.png"),
+                         "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_crossbow.png")},
+            "machine gun": {"icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
+                            "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png"),
+                            "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_machine_gun.png")}
             # Voeg andere items toe zoals shotgun, rifle etc.
         }
 
