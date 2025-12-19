@@ -1,6 +1,6 @@
 import pygame
 from slot import Slot
-from item import Item
+from holdable_objects import WeaponItem, ConsumableItem
 
 # Weapon IDs that go in the hotbar
 WEAPON_IDS = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow"]
@@ -67,23 +67,20 @@ class Inventory:
             pos = (hotbar_start_x + i * (size + gap), hotbar_y)
             self._hotbar_slots.append(Slot(self._socket_surf, pos))
 
-        # Spawn items: weapons go to hotbar first, others go to inventory
+        # ---------------- SPAWN ITEMS ----------------
         inventory_index = 0
         hotbar_index = 0
 
         for item_id, data in item_data.items():
-            item = Item(
-                item_id,
-                data["icon"],
-                data.get("weapon_surf"),
-                data.get("char_weapon"),
-                data.get("stackable", False),
-                data.get("amount", 1),
-                data.get("max_stack", 1)
-            )
-
             if item_id in WEAPON_IDS:
-                # Fill hotbar only
+                # Create a WeaponItem
+                item = WeaponItem(
+                    item_id,
+                    self._player.sound,
+                    icon_surf=data["icon"],
+                    char_weapon_surf=data.get("char_weapon")
+                )
+                # Fill hotbar first
                 if hotbar_index < len(self._hotbar_slots):
                     self._hotbar_slots[hotbar_index].set_item(item)
                     if hotbar_index == 0:
@@ -92,7 +89,16 @@ class Inventory:
                         self._player.set_equipped_item(item, play_sound=False)
                     hotbar_index += 1
             else:
-                # Non-weapons go to inventory
+                # Create a ConsumableItem
+                item = ConsumableItem(
+                    item_id,
+                    self._player.sound,
+                    icon_surf=data["icon"],
+                    stackable=data.get("stackable", False),
+                    amount=data.get("amount", 1),
+                    max_stack=data.get("max_stack", 1)
+                )
+                # Fill inventory slots
                 if inventory_index < len(self._inventory_slots):
                     self._inventory_slots[inventory_index].set_item(item)
                     inventory_index += 1
