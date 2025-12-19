@@ -59,7 +59,7 @@ class ImageButton:
 class Menu:
     def __init__(self, screen, items):
         self.screen = screen
-        self.items = items  # ["Play", "Scoreboard", "Settings", "Credits", "Quit"]
+        self.items = items  # ["Play", "Scoreboard", "Credits", "Quit"]
         self.width, self.height = self.screen.get_size()
 
         # Achtergrond
@@ -93,15 +93,6 @@ class Menu:
             width=button_width
         )
 
-        self.settings_idle = scale_image(
-            pygame.image.load(base + "settings_idle.png").convert_alpha(),
-            width=button_width
-        )
-        self.settings_pressed = scale_image(
-            pygame.image.load(base + "settings_pressed.png").convert_alpha(),
-            width=button_width
-        )
-
         self.credits_idle = scale_image(
             pygame.image.load(base + "credits_idle.png").convert_alpha(),
             width=button_width
@@ -130,10 +121,10 @@ class Menu:
         self.buttons = {
             "Play": ImageButton(center_x, start_y + spacing * 0, self.play_idle, self.play_pressed),
             "Scoreboard": ImageButton(center_x, start_y + spacing * 1, self.scoreboard_idle, self.scoreboard_pressed),
-            "Settings": ImageButton(center_x, start_y + spacing * 2, self.settings_idle, self.settings_pressed),
-            "Credits": ImageButton(center_x, start_y + spacing * 3, self.credits_idle, self.credits_pressed),
-            "Quit": ImageButton(center_x, start_y + spacing * 4, self.quit_idle, self.quit_pressed),
+            "Credits": ImageButton(center_x, start_y + spacing * 2, self.credits_idle, self.credits_pressed),
+            "Quit": ImageButton(center_x, start_y + spacing * 3, self.quit_idle, self.quit_pressed),
         }
+
 
     # -----------------------------
     #           DRAW MENU
