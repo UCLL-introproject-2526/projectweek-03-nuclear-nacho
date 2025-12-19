@@ -31,6 +31,8 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
+        pygame.mixer.set_num_channels(32)  # allows up to 32 simultaneous sounds
+
 
         self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self._clock = pygame.time.Clock()

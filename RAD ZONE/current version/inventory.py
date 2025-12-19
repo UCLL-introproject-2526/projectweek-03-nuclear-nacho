@@ -102,33 +102,34 @@ class Inventory:
         self._open = not self._open
 
     def select_next(self):
-        prev_index = self._selected_hotbar
+        # Move selection index
         self._selected_hotbar = (self._selected_hotbar + 1) % len(self._hotbar)
 
-        prev_item = self._equipped_item
+        # Fetch the item in the newly selected slot
         new_item = self._hotbar[self._selected_hotbar].get_item()
 
-        self._player.set_equipped_item(new_item)
+        # Update equipped item and player
         self._equipped_item = new_item
+        self._player.set_equipped_item(new_item)
 
-        # Play sound only if the new item exists AND is different from the previous
-        if new_item is not None and new_item != prev_item:
-            self._player.play_equip_sound(new_item)
 
 
     def select_previous(self):
-        prev_index = self._selected_hotbar
+        # Move selection index
         self._selected_hotbar = (self._selected_hotbar - 1) % len(self._hotbar)
 
-        prev_item = self._equipped_item
+        # Fetch the item in the newly selected slot
         new_item = self._hotbar[self._selected_hotbar].get_item()
+    
 
-        self._player.set_equipped_item(new_item)
+        # Update equipped item and player
         self._equipped_item = new_item
+        self._player.set_equipped_item(new_item)
 
-        # Play sound only if the new item exists AND is different from the previous
-        if new_item is not None and new_item != prev_item:
-            self._player.play_equip_sound(new_item)
+
+
+
+
 
 
 

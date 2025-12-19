@@ -71,17 +71,17 @@ class Player:
     def is_exhausted(self):
         return self._exhausted
     
-    def set_equipped_item(self, item):
-        self._equipped_item = item  # always store the item
-
-        # Only create a Weapon instance if the item is a weapon
+    def set_equipped_item(self, item, play_sound=True):
+        self._equipped_item = item
         weapon_ids = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow"]
+
         if item is not None and item.get_id() in weapon_ids:
             self.weapon = Weapon(item.get_id(), self.sound)
-            self.weapon.equip()
+            # if play_sound:
+            #     self.weapon.equip()  # only plays if play_sound=True
         else:
-            # For consumables or None, fallback to knife or leave weapon unchanged
             self.weapon = Weapon("knife", self.sound) if item is None else self.weapon
+
 
     def play_equip_sound(self, item):
         if item is None:
