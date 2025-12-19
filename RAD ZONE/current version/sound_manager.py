@@ -1,16 +1,13 @@
 import pygame
 import random
 
-import pygame
-import random
-
 class SoundManager:
     def __init__(self):
         # Ensure mixer is initialized
         if not pygame.mixer.get_init():
             pygame.mixer.init()
 
-        # Weapon sounds
+        # ---------------------- WEAPON SOUNDS ----------------------
         self.weapon = {
             "pistol": {
                 "shoot": pygame.mixer.Sound("RAD ZONE/current version/MP3/shoot_pistol.mp3"),
@@ -44,7 +41,7 @@ class SoundManager:
             }
         }
 
-        # Item sounds
+        # ---------------------- ITEM SOUNDS ----------------------
         self.items = {
             "pickup_bandage": pygame.mixer.Sound("RAD ZONE/current version/MP3/pickup_bandages.mp3"),
             "pickup_iodine_pills": pygame.mixer.Sound("RAD ZONE/current version/MP3/pickup_iodine_pills.mp3"),
@@ -52,24 +49,37 @@ class SoundManager:
             "use_iodine": pygame.mixer.Sound("RAD ZONE/current version/MP3/use_iodine_pills.mp3"),
         }
 
-        # Zombie death sounds
+        # ---------------------- ZOMBIE DEATH SOUNDS ----------------------
         self.zombie_death = [
             pygame.mixer.Sound(f"RAD ZONE/current version/MP3/zomdie_die_{i}.mp3")
             for i in range(1, 17)
         ]
 
-        # Player hurt sounds
+        # ---------------------- PLAYER HURT SOUNDS ----------------------
         self.player_hurt = [
             pygame.mixer.Sound(f"RAD ZONE/current version/MP3/player_take_damage_{i}.mp3")
             for i in range(1, 6)
         ]
+        self._player_hurt_index = 0  # cycle through sounds
 
-        # Current equip sound tracking
+        # Create a dedicated channel for player hurt sounds (prevents overlap)
+        self._player_hurt_channel = pygame.mixer.Channel(31)
+
+        # Set volume for player hurt sounds
+        hurt_volume = 0.3
+        for sound in self.player_hurt:
+            sound.set_volume(hurt_volume)
+
+        # ---------------------- EQUIP SOUND TRACKING ----------------------
         self._current_equip_sound = None
 
     # ---------------------- PLAYER HURT ----------------------
     def play_player_hurt(self):
-        random.choice(self.player_hurt).play()
+        # Only play if the dedicated channel is free
+        if not self._player_hurt_channel.get_busy():
+            sound = self.player_hurt[self._player_hurt_index]
+            self._player_hurt_channel.play(sound)
+            self._player_hurt_index = (self._player_hurt_index + 1) % len(self.player_hurt)
 
     # ---------------------- WEAPON ----------------------
     def play_weapon(self, weapon, action):

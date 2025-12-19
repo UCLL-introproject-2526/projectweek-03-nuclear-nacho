@@ -114,6 +114,8 @@ class Player:
     def take_damage(self, damage):
         self._health -= damage
         self._health = max(0, self._health)
+        if self.sound:
+            self.sound.play_player_hurt()
         
     def get_stamina(self):
         return self._stamina
