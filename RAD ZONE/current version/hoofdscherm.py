@@ -1,7 +1,6 @@
 import pygame
 import sys
 
-
 # -----------------------------
 #   SCALE FUNCTION
 # -----------------------------
@@ -10,11 +9,9 @@ def scale_image(img, width=None, height=None):
     if width is not None and height is None:
         ratio = width / img.get_width()
         height = int(img.get_height() * ratio)
-
     if height is not None and width is None:
         ratio = height / img.get_height()
         width = int(img.get_width() * ratio)
-
     return pygame.transform.scale(img, (width, height))
 
 
@@ -25,10 +22,8 @@ class ImageButton:
     def __init__(self, x, y, idle_img, pressed_img):
         self.idle = idle_img
         self.pressed = pressed_img
-
         self.current = self.idle
         self.rect = self.current.get_rect(center=(x, y))
-
         self.is_down = False
 
     def draw(self, screen):
@@ -46,7 +41,6 @@ class ImageButton:
             if self.is_down:
                 self.current = self.idle
                 self.is_down = False
-
                 if self.rect.collidepoint(event.pos):
                     return True  # CLICKED
 
@@ -69,47 +63,31 @@ class Menu:
         self.background = pygame.transform.scale(self.background, (self.width, self.height))
 
         # -----------------------------
+        #   LAAD EN START MUZIEK
+        # -----------------------------
+        pygame.mixer.init()
+        pygame.mixer.music.load("RAD ZONE/current version/MP3/intro_loop.mp3")
+        pygame.mixer.music.set_volume(0.7)
+        start_second = 5  # Start vanaf 5 seconden
+        pygame.mixer.music.play(-1, start=start_second)
+
+        # -----------------------------
         #   LOAD & SCALE BUTTON IMAGES
         # -----------------------------
         base = "RAD ZONE/UI/Menu/"
-
         button_width = self.width // 4  # 25% van schermbreedte
 
-        self.play_idle = scale_image(
-            pygame.image.load(base + "play_idle.png").convert_alpha(),
-            width=button_width
-        )
-        self.play_pressed = scale_image(
-            pygame.image.load(base + "play_pressed.png").convert_alpha(),
-            width=button_width
-        )
+        self.play_idle = scale_image(pygame.image.load(base + "play_idle.png").convert_alpha(), width=button_width)
+        self.play_pressed = scale_image(pygame.image.load(base + "play_pressed.png").convert_alpha(), width=button_width)
 
-        self.scoreboard_idle = scale_image(
-            pygame.image.load(base + "scoreboard_idle.png").convert_alpha(),
-            width=button_width
-        )
-        self.scoreboard_pressed = scale_image(
-            pygame.image.load(base + "scoreboard_pressed.png").convert_alpha(),
-            width=button_width
-        )
+        self.scoreboard_idle = scale_image(pygame.image.load(base + "scoreboard_idle.png").convert_alpha(), width=button_width)
+        self.scoreboard_pressed = scale_image(pygame.image.load(base + "scoreboard_pressed.png").convert_alpha(), width=button_width)
 
-        self.credits_idle = scale_image(
-            pygame.image.load(base + "credits_idle.png").convert_alpha(),
-            width=button_width
-        )
-        self.credits_pressed = scale_image(
-            pygame.image.load(base + "credits_pressed.png").convert_alpha(),
-            width=button_width
-        )
+        self.credits_idle = scale_image(pygame.image.load(base + "credits_idle.png").convert_alpha(), width=button_width)
+        self.credits_pressed = scale_image(pygame.image.load(base + "credits_pressed.png").convert_alpha(), width=button_width)
 
-        self.quit_idle = scale_image(
-            pygame.image.load(base + "quit_idle.png").convert_alpha(),
-            width=button_width
-        )
-        self.quit_pressed = scale_image(
-            pygame.image.load(base + "quit_pressed.png").convert_alpha(),
-            width=button_width
-        )
+        self.quit_idle = scale_image(pygame.image.load(base + "quit_idle.png").convert_alpha(), width=button_width)
+        self.quit_pressed = scale_image(pygame.image.load(base + "quit_pressed.png").convert_alpha(), width=button_width)
 
         # -----------------------------
         #   CREATE BUTTON OBJECTS
@@ -125,17 +103,13 @@ class Menu:
             "Quit": ImageButton(center_x, start_y + spacing * 3, self.quit_idle, self.quit_pressed),
         }
 
-
     # -----------------------------
     #           DRAW MENU
     # -----------------------------
     def draw(self):
         self.screen.blit(self.background, (0, 0))
-
-        # Draw all buttons
         for btn in self.buttons.values():
             btn.draw(self.screen)
-
         pygame.display.flip()
 
     # -----------------------------
@@ -147,10 +121,13 @@ class Menu:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    pygame.mixer.music.stop()
                     pygame.quit()
                     sys.exit()
 
                 # Check button clicks
                 for name, btn in self.buttons.items():
                     if btn.handle_event(event):
+                        if name == "Play":
+                            pygame.mixer.music.stop()  # Stop muziek bij Play
                         return name
