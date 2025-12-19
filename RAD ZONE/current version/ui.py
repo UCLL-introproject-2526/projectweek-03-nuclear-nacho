@@ -5,8 +5,9 @@ class UI:
         self._health_surf, self._health_rect = health
         self._stamina_surf, self._stamina_rect = stamina
         self._outline_surf = outline[0]
+        self._font = pygame.font.SysFont(None, 48)  # Font for wave display
 
-    def draw(self, screen, health, max_health, stamina, max_stamina):
+    def draw(self, screen, health, max_health, stamina, max_stamina, wave=1):
         # ---------- HEALTH (SHRINKS) ----------
         health_ratio = 0 if max_health <= 0 else max(0, min(health / max_health, 1))
         health_pos = self._health_rect.topleft
@@ -33,3 +34,7 @@ class UI:
             screen.blit(stamina_part, stamina_pos)
 
         screen.blit(self._outline_surf, stamina_pos)
+
+        # ---------- WAVE DISPLAY ----------
+        wave_text = self._font.render(f"Wave {wave}", True, (255, 255, 255))
+        screen.blit(wave_text, (screen.get_width() // 2 - wave_text.get_width() // 2, 20))
