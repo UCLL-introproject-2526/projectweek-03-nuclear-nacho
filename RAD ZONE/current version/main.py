@@ -1,7 +1,12 @@
 import pygame
 import time 
 
-# pygame.init()
+import pygame
+
+
+
+
+
 # clock = pygame.time.Clock()
 # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 # pygame.display.set_caption('RAD ZONE')
@@ -45,5 +50,7 @@ import time
 
 
 from game import Game
+pygame.init()          # initialize all Pygame modules
+pygame.mixer.init()    # initialize the audio mixer
 
 Game().run()
