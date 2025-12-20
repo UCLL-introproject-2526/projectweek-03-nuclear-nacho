@@ -213,6 +213,12 @@ class Zombie:
     def get_position(self):
         return self._pos
 
+    def get_rect(self):
+        width, height = 50, 80  # match your hitbox
+        pos = self.get_position()
+        return pygame.Rect(pos.x - width//2, pos.y - height//2, width, height)
+
+
     def is_attacking(self):
         return self._is_attacking and self.state == "attack"
 

@@ -1,26 +1,74 @@
 class Weapon:
-    def __init__(self, name, sound_manager):
-        self.name = name
-        self.sound_manager = sound_manager   # ✅ fix here
-
-        self.full_auto = (name == "rifle")
-        self.fire_rate = 0.15 if self.full_auto else 0.3
-        self._last_shot_time = 0
+    def __init__(self, id, sound_manager):
+        self.id = id                  # the ID string like "shotgun"
+        self.name = id                # optional, keep for display if needed
+        self.sound_manager = sound_manager
 
         weapon_stats = {
-            "knife": {"damage": 50, "range": 50, "fire_rate": 1.0, "width": 10},
-            "pistol": {"damage": 20, "range": 300, "fire_rate": 0.5, "width": 15},
-            "rifle": {"damage": 35, "range": 500, "fire_rate": 0.3, "width": 20},
-            "revolver": {"damage": 30, "range": 300, "fire_rate": 0.6, "width": 18},
-            "shotgun": {"damage": 70, "range": 100, "fire_rate": 1.0, "width": 25},
-            "crossbow": {"damage": 40, "range": 400, "fire_rate": 1.2, "width": 20},
-            "machine gun": {"damage": 30, "range": 300, "fire_rate": 0.02, "width": 22}  # ✅ Add all required keys 
+            "knife": {
+                "damage": 50,
+                "range": 100,
+                "fire_rate": 1.0,
+                "width": 40,
+                "full_auto": False
+            },
+            "pistol": {
+                "damage": 20,
+                "range": 400,
+                "fire_rate": 0.1,
+                "width": 20,
+                "full_auto": False
+            },
+            "revolver": {
+                "damage": 30,
+                "range": 500,
+                "fire_rate": 0.1,
+                "width": 22,
+                "full_auto": False
+            },
+            "shotgun": {
+                "damage": 12,        # damage PER pellet
+                "range": 400,
+                "fire_rate": 0.8,
+                "width": 35,
+                "full_auto": False,
+                "pellets": 6,        # 👈 ADD THIS
+                "spread": 18         # 👈 ADD THIS (degrees)
+            },
+            "crossbow": {
+                "damage": 60,
+                "range": 600,
+                "fire_rate": 1.2,
+                "width": 18,
+                "full_auto": False
+            },
+            "machine_gun": {
+                "damage": 15,
+                "range": 600,
+                "fire_rate": 0.1,   # fast but stable
+                "width": 22,
+                "full_auto": True
+            }
         }
 
-        stats = weapon_stats.get(name)
+        if id not in weapon_stats:
+            raise ValueError(f"Unknown weapon id: {id}")
+
+        stats = weapon_stats[id]
+
+        # after loading stats:
         self.damage = stats["damage"]
         self.range = stats["range"]
+        self.fire_rate = stats["fire_rate"]
         self.width = stats["width"]
+        self.full_auto = stats["full_auto"]
+
+        # Optional, shotgun-only
+        self.pellets = stats.get("pellets", 1)
+        self.spread = stats.get("spread", 0)
+
+        self._last_shot_time = 0
+
 
 
     def equip(self):
@@ -31,15 +79,11 @@ class Weapon:
     #         return False
 
     def shoot(self, current_time):
-        if current_time - self._last_shot_time < self.fire_rate:
-            return False
-        self._last_shot_time = current_time
-        # print(f"Firing {self.name}")  # 🔥 Debug line
-        self.sound_manager.play_weapon(self.name, "shoot")
-        return True
+        if current_time - self._last_shot_time >= self.fire_rate:
+            self._last_shot_time = current_time
+            return True
+        return False
 
-        self._last_shot_time = current_time
-        return True  # still fires logically, just no sound
 
     def reload(self):
         pass  # 🔇 intentionally silent

@@ -3,7 +3,7 @@ from slot import Slot
 from holdable_objects import WeaponItem, ConsumableItem
 
 # Weapon IDs that go in the hotbar
-WEAPON_IDS = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow", "machine gun"]
+WEAPON_IDS = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow", "machine_gun"]
 
 class Inventory:
     def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg, player):
@@ -84,6 +84,7 @@ class Inventory:
                     icon_surf=data["icon"],
                     char_weapon_surf=data.get("char_weapon")
                 )
+
                 # Fill hotbar
                 if hotbar_index < len(self._hotbar_slots):
                     self._hotbar_slots[hotbar_index].set_item(item)

@@ -160,7 +160,7 @@ class Game:
                 "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_crossbow.png"),
                 "owned": True
             },
-            "machine gun": {
+            "machine_gun": {
                 "icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
                 "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png"),
                 "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_machine_gun.png"),
@@ -302,9 +302,27 @@ class Game:
 
             for obj_type, obj, _ in sorted(drawables, key=lambda x: x[2]):
                 if obj_type == "player":
-                    obj.draw(self._screen)
+                    obj.draw(self._screen, self._camera)
+
                 else:
                     obj.draw(self._screen, self._camera)
+
+
+            # DEBUG: visualize zombie hitboxes
+            if self._zombie_spawner:
+                for zombie in self._zombie_spawner.get_zombies():
+                    pos = zombie.get_position()  # world coordinates
+                    width, height = 50, 80      # adjust to match zombie size
+
+                    # Convert to screen coordinates using camera
+                    screen_pos = pos - self._camera.get_position()
+                    rect = pygame.Rect(
+                        screen_pos.x - width // 2,
+                        screen_pos.y - height // 2,
+                        width,
+                        height
+                    )
+                    pygame.draw.rect(self._screen, (255, 0, 0), rect, 1)                   
 
             if self._ui:
                 self._ui.draw(

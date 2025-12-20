@@ -1,4 +1,5 @@
 import pygame
+import random
 from holdable_objects import WeaponItem, ConsumableItem
 from animation import Animator
 from zombie import Zombie
@@ -10,6 +11,8 @@ class Player:
         self._pos = pygame.Vector2(self._rect.center)
         self.sound = sound
         self.animator = Animator("RAD ZONE/current version/Graphics/player")
+        self._tracers = []  # List of dicts: {'pos', 'dir', 'speed', 'distance', 'start'}
+
 
         # Movement
         self._move_dir = pygame.Vector2()
@@ -63,17 +66,17 @@ class Player:
 
     def set_equipped_item(self, item, play_sound=True):
         if item is self._equipped_item:
-            return  # Already equipped, do nothing
+            return
 
         self._equipped_item = item
+
         if isinstance(item, WeaponItem):
-            self.weapon = item.get_weapon()
+            self.weapon = item.get_weapon()   # ✅ ONLY ONCE
             if play_sound:
                 item.play_equip_sound()
         else:
             self.weapon = None
-            if play_sound and isinstance(item, ConsumableItem):
-                item.play_pickup_sound()
+
 
 
     # ---------- HEALTH ----------
@@ -144,6 +147,37 @@ class Player:
         # Animation
         self.animator.update(self._move_dir, dt, current_time, override_stab=self._is_stabbing)
 
+        # Update projectile tracers
+        for i in range(len(self._tracers) - 1, -1, -1):
+            tracer = self._tracers[i]
+            prev_pos = tracer['pos'].copy()
+            tracer['pos'] += tracer['dir'] * tracer['speed'] * dt
+
+            hit_something = False
+            for zombie in self._zombie_spawner.get_zombies():
+                if zombie._is_dead:
+                    continue
+
+                rect = zombie.get_rect()
+                if rect.clipline(prev_pos, tracer['pos']):
+                    # Deal damage
+                    if self.weapon:
+                        zombie.take_damage(
+                            self.weapon.damage,
+                            tracer['dir'],
+                            pygame.time.get_ticks() / 1000
+                        )
+                    # Remove tracer immediately
+                    self._tracers.pop(i)
+                    hit_something = True
+                    break  # stop checking other zombies for this tracer
+
+            # Remove tracer if it reached max distance and didn't hit anything
+            if not hit_something and (tracer['pos'] - tracer['start']).length() >= tracer['distance']:
+                self._tracers.pop(i)
+
+
+
         # Weapon & Mouse Input
         mouse_pressed = pygame.mouse.get_pressed()[0]
         if self._equipped_item:
@@ -157,70 +191,172 @@ class Player:
 
     # ---------- MELEE & GUN ----------
     def _handle_weapon_attack(self, mouse_pressed, current_time):
-        weapon_type = self._equipped_item.get_id()
-        if weapon_type == "knife":
+        if not self.weapon:
+            return
+
+        weapon = self.weapon
+        weapon_id = weapon.id
+
+        # ---------------- KNIFE ----------------
+        if weapon_id == "knife":
             if mouse_pressed and not self._was_mouse_pressed:
-                if self.weapon.shoot(current_time):
-                    self._is_stabbing = True
-                    self._stab_end_time = current_time + 0.4
-                    self.animator.play_stab()
-                    self._attack_last_time = current_time
-                    self._attack_targets_hit = set()
-                    self._apply_knife_damage()
+                if not self._is_stabbing:
+                    self._start_stab(current_time)
+                    if self.sound:
+                        self.sound.play_weapon("knife", "shoot")
+
+            # Stop stab after duration
             if self._is_stabbing and current_time >= self._stab_end_time:
                 self._is_stabbing = False
+
+            return
+
+
+        # ---------------- GUNS ----------------
+        fired = False
+
+        if weapon.full_auto:
+            if mouse_pressed and weapon.shoot(current_time):
+                fired = True
         else:
-            if self.weapon.full_auto:
-                if mouse_pressed and self.weapon.shoot(current_time):
-                    self._apply_gun_damage()
-            else:
-                if mouse_pressed and not self._was_mouse_pressed:
-                    if self.weapon.shoot(current_time):
-                        self._apply_gun_damage()
+            if mouse_pressed and not self._was_mouse_pressed:
+                if weapon.shoot(current_time):
+                    fired = True
 
-    # ---------- MELEE DAMAGE ----------
+        if fired:
+            self._apply_gun_damage()
+            if self.sound:
+                self.sound.play_weapon(weapon_id, "shoot")
+
+
+
+
+    # ---------------- KNIFE STAB ----------------
+    def _start_stab(self, current_time):
+        """Initiates a knife stab attack."""
+        self._is_stabbing = True
+        self._stab_end_time = current_time + 0.4
+        self._attack_last_time = current_time
+        self._attack_targets_hit = set()
+        self.animator.play_stab()
+        self._apply_knife_damage()
+
+
+    # ---------------- APPLY DAMAGE ----------------
     def _apply_knife_damage(self):
-        if not hasattr(self, "_zombie_spawner") or self._zombie_spawner is None:
-            return
+        """Deals damage to zombies near the player for a knife attack."""
+        player_pos = pygame.Vector2(self.get_rect().center)
         for zombie in self._zombie_spawner.get_zombies():
-            if zombie.is_dead() or zombie in self._attack_targets_hit:
-                continue
-            distance = (zombie.get_position() - self._pos).length()
-            if distance <= 100:
-                knockback_dir = zombie.get_position() - self._pos
-                knockback_dir = knockback_dir.normalize() if knockback_dir.length_squared() > 0 else pygame.Vector2(0, -1)
-                zombie.take_damage(50, knockback_dir, current_time=pygame.time.get_ticks()/1000)
-                self._attack_targets_hit.add(zombie)
+            if zombie not in self._attack_targets_hit and not zombie._is_dead:
+                if (zombie.get_position() - player_pos).length() < 100:
+                    zombie.take_damage(
+                        50,
+                        zombie.get_position() - player_pos,
+                        pygame.time.get_ticks() / 1000
+                    )
+                    self._attack_targets_hit.add(zombie)
 
-    # ---------- GUN DAMAGE ----------
     def _apply_gun_damage(self):
-        if not hasattr(self, "_zombie_spawner") or self._zombie_spawner is None:
+        if not self._zombie_spawner or not self.weapon:
             return
-        player_pos = self._pos
-        shot_dir = self._mouse_world - player_pos
-        if shot_dir.length_squared() == 0:
+
+        player_pos = pygame.Vector2(self.get_rect().center)
+        direction = (self._mouse_world - player_pos)
+
+        if direction.length() == 0:
             return
-        shot_dir = shot_dir.normalize()
+
+        direction = direction.normalize()
+        max_range = self.weapon.range
+
+        # SHOTGUN
+        if self.weapon.id == "shotgun":
+            pellets = self.weapon.pellets
+            spread = self.weapon.spread
+
+            for _ in range(pellets):
+                angle = random.uniform(-spread, spread)
+                pellet_dir = direction.rotate(angle)
+                end_pos = player_pos + pellet_dir * self.weapon.range
+
+                self._raycast_and_damage(player_pos, end_pos)
+                self._spawn_tracer(player_pos, end_pos)
+
+        # NORMAL GUNS
+        else:
+            end_pos = player_pos + direction * self.weapon.range
+            self._raycast_and_damage(player_pos, end_pos)
+            self._spawn_tracer(player_pos, end_pos)
+
+    def _raycast_and_damage(self, start, end):
+        closest_zombie = None
+        closest_dist = float("inf")
+
         for zombie in self._zombie_spawner.get_zombies():
-            if zombie.is_dead():
+            if zombie._is_dead:
                 continue
-            to_zombie = zombie.get_position() - player_pos
-            distance_along_shot = to_zombie.dot(shot_dir)
-            if 0 <= distance_along_shot <= self.weapon.range:
-                perp_dist_vec = to_zombie - shot_dir * distance_along_shot
-                if perp_dist_vec.length_squared() <= (self.weapon.width / 2) ** 2:
-                    knockback_dir = perp_dist_vec if perp_dist_vec.length_squared() > 0 else shot_dir
-                    zombie.take_damage(self.weapon.damage, knockback_dir, current_time=pygame.time.get_ticks()/1000)
+
+            rect = zombie.get_rect()
+            hit = rect.clipline(start, end)
+
+            if hit:
+                hit_point = pygame.Vector2(hit[0])
+                dist = hit_point.distance_to(start)
+
+                if dist < closest_dist:
+                    closest_dist = dist
+                    closest_zombie = zombie
+
+        if closest_zombie:
+            closest_zombie.take_damage(
+                self.weapon.damage,
+                (end - start).normalize(),
+                pygame.time.get_ticks() / 1000
+            )
+
+    def _spawn_tracer(self, start, end):
+        direction = (end - start)
+        if direction.length() == 0:
+            return
+        direction = direction.normalize()
+        distance = (end - start).length()
+        speed = 1200  # pixels per second, tweak as needed
+
+        self._tracers.append({
+            'pos': start.copy(),
+            'dir': direction,
+            'speed': speed,
+            'distance': distance,
+            'start': start.copy()
+        })
+
+
+            
 
     # ---------- DRAW ----------
-    def draw(self, screen):
+    def draw(self, screen, camera):
         image = self.animator.get_image()
         rect = image.get_rect(center=screen.get_rect().center)
+
         if self._move_dir.y < 0:
             self.draw_weapon(screen)
+
         screen.blit(image, rect)
+
         if self._move_dir.y >= 0:
             self.draw_weapon(screen)
+
+        # -------- DRAW TRACERS --------
+        cam_offset = camera.get_position()
+        for tracer in self._tracers:
+            tracer_pos = tracer['pos'] - cam_offset
+            pygame.draw.circle(
+                screen,
+                (255, 240, 150),  # pale yellow
+                (int(tracer_pos.x), int(tracer_pos.y)),
+                3
+            )
+
 
     def draw_weapon(self, screen):
         if not self._equipped_item: return
