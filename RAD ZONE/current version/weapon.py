@@ -8,12 +8,13 @@ class Weapon:
         self._last_shot_time = 0
 
         weapon_stats = {
-            "pistol": {"damage": 25, "range": 800, "width": 40},
-            "rifle": {"damage": 35, "range": 1200, "width": 30},
-            "shotgun": {"damage": 60, "range": 400, "width": 60},
-            "revolver": {"damage": 40, "range": 900, "width": 40},
-            "crossbow": {"damage": 50, "range": 1000, "width": 30},
-            "knife": {"damage": 50, "range": 100, "width": 20},
+            "knife": {"damage": 50, "range": 50, "fire_rate": 1.0, "width": 10},
+            "pistol": {"damage": 20, "range": 300, "fire_rate": 0.5, "width": 15},
+            "rifle": {"damage": 35, "range": 500, "fire_rate": 0.3, "width": 20},
+            "revolver": {"damage": 30, "range": 300, "fire_rate": 0.6, "width": 18},
+            "shotgun": {"damage": 70, "range": 100, "fire_rate": 1.0, "width": 25},
+            "crossbow": {"damage": 40, "range": 400, "fire_rate": 1.2, "width": 20},
+            "machine gun": {"damage": 30, "range": 300, "fire_rate": 0.02, "width": 22}  # ✅ Add all required keys 
         }
 
         stats = weapon_stats.get(name)
@@ -33,7 +34,7 @@ class Weapon:
         if current_time - self._last_shot_time < self.fire_rate:
             return False
         self._last_shot_time = current_time
-        print(f"Firing {self.name}")  # 🔥 Debug line
+        # print(f"Firing {self.name}")  # 🔥 Debug line
         self.sound_manager.play_weapon(self.name, "shoot")
         return True
 

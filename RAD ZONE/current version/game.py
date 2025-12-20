@@ -131,24 +131,41 @@ class Game:
 
         # Example items
         item_data = {
-            "pistol": {"icon": load_icon("RAD ZONE/current version/Graphics/pistool.png"),
-                       "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/pistool.png"),
-                       "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_pistool.png")},
-            "knife": {"icon": load_icon("RAD ZONE/current version/Graphics/knife.png"),
-                      "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png")},
-            "revolver": {"icon": load_icon("RAD ZONE/current version/Graphics/revolver.png"),
-                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/revolver.png"),
-                         "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_revolver.png")},
-            "shotgun": {"icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
-                        "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png"),
-                        "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_shotgun.png")},
-            "crossbow": {"icon": load_icon("RAD ZONE/current version/Graphics/crossbow.png"),
-                         "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/crossbow.png"),
-                         "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_crossbow.png")},
-            "machine gun": {"icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
-                            "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png"),
-                            "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_machine_gun.png")}
-            # Voeg andere items toe zoals shotgun, rifle etc.
+            "pistol": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/pistool.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/pistool.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_pistool.png"),
+                "owned": True  # ✅ player owns pistol
+            },
+            "knife": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/knife.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/knife.png"),
+                "owned": True
+            },
+            "revolver": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/revolver.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/revolver.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_revolver.png"),
+                "owned": True  # ❌ player does NOT own revolver, won't appear
+            },
+            "shotgun": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/shotgun.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/shotgun.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_shotgun.png"),
+                "owned": True
+            },
+            "crossbow": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/crossbow.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/crossbow.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_crossbow.png"),
+                "owned": True
+            },
+            "machine gun": {
+                "icon": load_icon("RAD ZONE/current version/Graphics/machine_gun.png"),
+                "weapon_surf": load_weapon("RAD ZONE/current version/Graphics/machine_gun.png"),
+                "char_weapon": load_char_weapon("RAD ZONE/current version/Graphics/char_machine_gun.png"),
+                "owned": True
+            }
         }
 
         socket_surf = ImageLoader.load("RAD ZONE/current version/Graphics/Inventory_box.png", size=(64, 64))[0]

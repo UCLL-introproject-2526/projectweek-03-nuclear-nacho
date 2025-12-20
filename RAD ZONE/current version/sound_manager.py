@@ -46,6 +46,11 @@ class SoundManager:
                 "shoot": pygame.mixer.Sound("RAD ZONE/current version/MP3/shoot_crossbow.mp3"),
                 "equip": None,
                 "reload": None,
+            },
+            "machine gun": {
+                "shoot": pygame.mixer.Sound("RAD ZONE/current version/MP3/shoot_rifle_single_shot.mp3"),
+                "reload": pygame.mixer.Sound("RAD ZONE/current version/MP3/reload_rifle.mp3"),
+                "equip": pygame.mixer.Sound("RAD ZONE/current version/MP3/equip_rifle.mp3"),
             }
         }
 

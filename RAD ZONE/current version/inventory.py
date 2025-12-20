@@ -3,7 +3,7 @@ from slot import Slot
 from holdable_objects import WeaponItem, ConsumableItem
 
 # Weapon IDs that go in the hotbar
-WEAPON_IDS = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow"]
+WEAPON_IDS = ["knife", "pistol", "rifle", "revolver", "shotgun", "crossbow", "machine gun"]
 
 class Inventory:
     def __init__(self, socket_surf, item_data, screen_size, inventory_bg, hotbar_bg, player):
@@ -40,7 +40,7 @@ class Inventory:
         start_y = (h - inv_height) // 2 + size // 2
 
         # Hotbar
-        hotbar_slots = 5
+        hotbar_slots = 6
         hotbar_width = hotbar_slots * size + (hotbar_slots - 1) * gap
         hotbar_y = h - int(100 * self._ui_scale)
         hotbar_start_x = (w - hotbar_width) // 2 + size // 2
@@ -62,48 +62,35 @@ class Inventory:
                 pos = (start_x + col * (size + gap), start_y + row * (size + gap))
                 self._inventory_slots.append(Slot(self._socket_surf, pos))
 
+        # Clear inventory to ensure empty at start
+        for slot in self._inventory_slots:
+            slot.clear_item()
+
         # Create hotbar slots
         for i in range(hotbar_slots):
             pos = (hotbar_start_x + i * (size + gap), hotbar_y)
             self._hotbar_slots.append(Slot(self._socket_surf, pos))
 
         # ---------------- SPAWN ITEMS ----------------
-        inventory_index = 0
         hotbar_index = 0
-
         for item_id, data in item_data.items():
+            if not data.get("owned", True):
+                continue  # skip items the player does not own
+
             if item_id in WEAPON_IDS:
-                # Create a WeaponItem
                 item = WeaponItem(
                     item_id,
-                    self._player.sound,      # ✅ this should be a SoundManager instance
+                    self._player.sound,
                     icon_surf=data["icon"],
                     char_weapon_surf=data.get("char_weapon")
                 )
-
-                # Fill hotbar first
+                # Fill hotbar
                 if hotbar_index < len(self._hotbar_slots):
                     self._hotbar_slots[hotbar_index].set_item(item)
                     if hotbar_index == 0:
-                        # Auto-equip first weapon
                         self._equipped_item = item
                         self._player.set_equipped_item(item, play_sound=False)
                     hotbar_index += 1
-            else:
-                # Create a ConsumableItem
-                item = ConsumableItem(
-                    item_id,
-                    sound_manager=self._player.sound,
-                    icon_surf=data["icon"],
-                    stackable=data.get("stackable", False),
-                    amount=data.get("amount", 1),
-                    max_stack=data.get("max_stack", 1)
-                )
-
-                # Fill inventory slots
-                if inventory_index < len(self._inventory_slots):
-                    self._inventory_slots[inventory_index].set_item(item)
-                    inventory_index += 1
 
     # ---------- GETTERS ----------
     def get_equipped_item(self):
@@ -132,10 +119,7 @@ class Inventory:
         self._mouse_down_prev = mouse_down
 
         # Inventory slots drag & drop only inside inventory
-        if self._open:
-            slots = self._inventory_slots
-        else:
-            slots = []
+        slots = self._inventory_slots if self._open else []
 
         # Update hover states for inventory
         for slot in slots:

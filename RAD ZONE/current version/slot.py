@@ -46,30 +46,24 @@ class Slot:
         self._rect = self._surf.get_rect(center=self._rect.center)
 
     def draw(self, screen):
+        # Draw slot background
         screen.blit(self._surf, self._rect)
 
+        # Draw item icon only if the slot has an actual item
         if self._item:
-            icon = self._item.get_icon()
-            icon_rect = icon.get_rect(center=self._rect.center)
-            screen.blit(icon, icon_rect)
+            # Only draw if item has an icon
+            icon = getattr(self._item, "get_icon", lambda: None)()
+            if icon:
+                icon_rect = icon.get_rect(center=self._rect.center)
+                screen.blit(icon, icon_rect)
 
-            if self._item.is_stackable() and self._item.get_amount() > 1:
+            # Draw stack count if stackable
+            if getattr(self._item, "is_stackable", lambda: False)() and getattr(self._item, "get_amount", lambda: 1)() > 1:
                 font = pygame.font.SysFont(None, 24)
-                text = font.render(
-                    str(self._item.get_amount()),
-                    True,
-                    (255, 255, 255)
-                )
-                text_rect = text.get_rect(
-                    bottomright=self._rect.bottomright
-                )
+                text = font.render(str(self._item.get_amount()), True, (255, 255, 255))
+                text_rect = text.get_rect(bottomright=self._rect.bottomright)
                 screen.blit(text, text_rect)
 
-        # ✅ SELECTED BORDER
+        # Draw selection border
         if self._selected:
-            pygame.draw.rect(
-                screen,
-                (0, 0, 0),
-                self._rect.inflate(8, 8),
-                3
-            )
+            pygame.draw.rect(screen, (0, 0, 0), self._rect.inflate(8, 8), 3)
